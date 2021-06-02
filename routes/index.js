@@ -13,7 +13,8 @@ router.get('/', function(req, res, next) {
 
 /* GET article title */
 router.get('/getArticleTitle', (req, res) => {
-  const url = 'https://covidontheweb.inria.fr/sparql';
+  //const url = 'https://covidontheweb.inria.fr/sparql';
+  const url = process.env.URL;
   const query =`select *
                 where {
                 <http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dct:title ?title.
