@@ -2,6 +2,17 @@ var express = require('express');
 var router = express.Router();
 let d3 = require('d3-sparql');
 require('dotenv').config();
+fs = require('fs');
+
+function replaceAll(str, find, replace) {
+  return str.replace(new RegExp(find, 'g'), replace);
+}
+
+function readTemplate(template, idArticle){
+  let queryF =  fs.readFileSync('public/sparqlTemplate/' + template, 'utf8');
+  let queryWithId =  replaceAll(queryF,"{idArticle}",idArticle);
+  return queryWithId;
+}
 
 
 /* GET home page. */
@@ -10,15 +21,15 @@ router.get('/', function(req, res, next) {
 });
 
 
-
 /* GET article title */
-router.get('/getArticleTitle', (req, res) => {
-  //const url = 'https://covidontheweb.inria.fr/sparql';
-  const url = process.env.URL;
-  const query =`select *
-                where {
-                <http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dct:title ?title.
-                }LIMIT 10`;
+router.get('/getArticleTitle/:id', (req, res) => {
+  var idArticle = req.params.id;
+  const url = process.env.ISSA_SPARQL_ENDPOINT;
+  var idArticleFinal = "<http://ns.inria.fr/issa/" + idArticle + ">";
+  let query = readTemplate("getArticleTitle.txt",idArticleFinal);
+
+  console.log("----------->Read template : query : "+query);
+  //console.log("-----------> article id : "+idArticle)
 
   (async () => {
     let cons;
@@ -28,10 +39,11 @@ router.get('/getArticleTitle', (req, res) => {
       result = await d3.sparql(url, query).then((data) => {
         cons =console.log("----------------------->"+data);
         return data;
-      }).then(res => res.data);
+      }).then(res => res);
 
 
     } catch (err) {
+      console.log("-------------> Error return by sparqlEndpoint : " + err);
       result = err
     }
     res.status(200).json({ result })
@@ -39,26 +51,97 @@ router.get('/getArticleTitle', (req, res) => {
 });
 
 
-/*  GET article metaData (title , date , articleType ) */
+/*  GET article metaData (title , date , articleType ... )  without the authors */
 
-router.get('/getArticleMetadata', (req, res) => {
-  const url = 'https://covidontheweb.inria.fr/sparql';
-  const query =`select *
-                where {
-                OPTIONAL { <http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dct:title ?title.}
-                OPTIONAL { <http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dct:issued ?date.}
-                OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dce:creator ?authors.}
-                OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> schema:publication ?pub.}
-                OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dct:license ?license.}
-                OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> bibo:doi ?doi.}
-                OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> bibo:pmid ?pmid.}
-                OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> fabio:hasPubMedId ?hasPubMedId.}
-                OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dct:source ?source.}
-                OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> schema:url ?url.}
-                OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dce:language ?lang.}
-                OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dct:language ?lang2.}
-                OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dct:abstract [rdf:value ?abs].}
-                }LIMIT 100`;
+router.get('/getArticleMetadata/:id', (req, res) => {
+  var idArticle = req.params.id;
+  const url = process.env.ISSA_SPARQL_ENDPOINT;
+  var idArticleFinal = "<http://ns.inria.fr/issa/" + idArticle + ">";
+  let query = readTemplate("getArticleMetadata.txt",idArticleFinal);
+  console.log("----------->Read template : query : "+query);
+  (async () => {
+    let cons;
+    let result;
+    let listRes;
+
+    try {
+      result = await d3.sparql(url, query).then((data) => {
+        cons =console.log("----------------------->"+data);
+        return data;
+
+      }).then(res => res);
+
+    } catch (err) {
+      result = err
+    }
+    res.status(200).json({ result })
+  })()
+
+});
+
+
+/* GET article authors*/
+
+router.get('/getArticleAuthors/:id', (req, res) => {
+  var idArticle = req.params.id;
+  const url = process.env.ISSA_SPARQL_ENDPOINT;
+  var idArticleFinal = "<http://ns.inria.fr/issa/" + idArticle + ">";
+  let query = readTemplate("getArticleAuthors.txt",idArticleFinal);
+  (async () => {
+    let cons;
+    let result;
+    let listRes;
+
+    try {
+      result = await d3.sparql(url, query).then((data) => {
+        cons =console.log("----------------------->"+data);
+        return data;
+
+      }).then(res => res);
+
+    } catch (err) {
+      result = err
+    }
+    res.status(200).json({ result })
+  })()
+
+});
+
+
+/* Get named entities */
+
+router.get('/getArticleNamedEntities/:id', (req, res) => {
+  var idArticle = req.params.id;
+  const url = process.env.ISSA_SPARQL_ENDPOINT;
+  var idArticleFinal = "<http://ns.inria.fr/issa/" + idArticle + ">";
+  let query = readTemplate("getArticleNamedEntities.txt",idArticleFinal);
+  (async () => {
+    let cons;
+    let result;
+    let listRes;
+
+    try {
+      result = await d3.sparql(url, query).then((data) => {
+        cons =console.log("----------------------->"+data);
+        return data;
+
+      }).then(res => res);
+
+    } catch (err) {
+      result = err
+    }
+    res.status(200).json({ result })
+  })()
+
+});
+
+/* Get global descriptors : The global descriptors are concepts characterizing the article as a whole */
+
+router.get('/getArticleDescriptors/:id', (req, res) => {
+  var idArticle = req.params.id;
+  const url = process.env.ISSA_SPARQL_ENDPOINT;
+  var idArticleFinal = "<http://ns.inria.fr/issa/" + idArticle + ">";
+  let query = readTemplate("getArticleDescriptors.txt",idArticleFinal);
   (async () => {
     let cons;
     let result;
@@ -81,24 +164,3 @@ router.get('/getArticleMetadata', (req, res) => {
 
 
 module.exports = router;
-
-
-/* Request 1:
-
-select *
-where {
-OPTIONAL { <http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dct:title ?title.}
-OPTIONAL { <http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dct:issued ?date.}
-OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dce:creator ?authors.}
-OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> schema:publication ?pub.}
-OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dct:license ?license.}
-OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> bibo:doi ?doi.}
-OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> bibo:pmid ?pmid.}
-OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> fabio:hasPubMedId ?hasPubMedId.}
-OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dct:source ?source.}
-OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> schema:url ?url.}
-OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dce:language ?lang.}
-OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dct:language ?lang2.}
-OPTIONAL {<http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f> dct:abstract [rdf:value ?abs].}
-}LIMIT 100
- */

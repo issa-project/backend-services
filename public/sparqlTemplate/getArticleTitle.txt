@@ -1,0 +1,4 @@
+select *
+where {
+{idArticle} dct:title ?title.
+}LIMIT 10

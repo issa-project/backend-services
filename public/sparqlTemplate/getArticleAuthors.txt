@@ -1,0 +1,4 @@
+select *
+where {
+{idArticle} dce:creator ?authors.
+}LIMIT 100

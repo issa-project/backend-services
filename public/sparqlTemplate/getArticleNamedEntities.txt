@@ -1,0 +1,9 @@
+select ?nameEntity ?startPos ?endPos
+where {
+?entity schema:about {idArticle} .
+?entity oa:hasTarget ?z.
+OPTIONAL { ?z oa:hasSelector [oa:exact ?nameEntity].}
+OPTIONAL { ?z oa:hasSelector [oa:start ?startPos].}
+OPTIONAL { ?z oa:hasSelector [oa:end ?endPos]. }
+}
+LIMIT 100
