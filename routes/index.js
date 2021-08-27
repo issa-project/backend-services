@@ -62,7 +62,6 @@ router.get('/getArticleMetadata/:id', (req, res) => {
   (async () => {
     let cons;
     let result;
-    let listRes;
 
     try {
       result = await d3.sparql(url, query).then((data) => {
@@ -90,7 +89,6 @@ router.get('/getArticleAuthors/:id', (req, res) => {
   (async () => {
     let cons;
     let result;
-    let listRes;
 
     try {
       result = await d3.sparql(url, query).then((data) => {
@@ -118,7 +116,6 @@ router.get('/getArticleNamedEntities/:id', (req, res) => {
   (async () => {
     let cons;
     let result;
-    let listRes;
 
     try {
       result = await d3.sparql(url, query).then((data) => {
@@ -145,7 +142,6 @@ router.get('/getArticleDescriptors/:id', (req, res) => {
   (async () => {
     let cons;
     let result;
-    let listRes;
 
     try {
       result = await d3.sparql(url, query).then((data) => {
@@ -161,6 +157,10 @@ router.get('/getArticleDescriptors/:id', (req, res) => {
   })()
 
 });
+
+
+
+
 
 
 module.exports = router;

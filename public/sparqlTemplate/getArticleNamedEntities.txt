@@ -1,9 +1,11 @@
-select ?nameEntity ?startPos ?endPos
+select ?nameEntity ?startPos ?endPos ?link
 where {
 ?entity schema:about {idArticle} .
 ?entity oa:hasTarget ?z.
 OPTIONAL { ?z oa:hasSelector [oa:exact ?nameEntity].}
 OPTIONAL { ?z oa:hasSelector [oa:start ?startPos].}
 OPTIONAL { ?z oa:hasSelector [oa:end ?endPos]. }
+OPTIONAL { ?entity oa:hasBody ?link }
+
 }
 LIMIT 100

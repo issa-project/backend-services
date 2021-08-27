@@ -12,6 +12,7 @@ OPTIONAL { {idArticle} dct:title ?title.}
                 OPTIONAL { {idArticle} dce:language ?lang.}
                 OPTIONAL { {idArticle} dct:language ?lang2.}
                 OPTIONAL { {idArticle} dct:abstract [rdf:value ?abs].}
+                OPTIONAL {{idArticle} schema:downloadUrl ?linkPDF. }
                 }LIMIT 100
 
 
