@@ -5,7 +5,6 @@ where {
 OPTIONAL { ?z oa:hasSelector [oa:exact ?nameEntity].}
 OPTIONAL { ?z oa:hasSelector [oa:start ?startPos].}
 OPTIONAL { ?z oa:hasSelector [oa:end ?endPos]. }
-OPTIONAL { ?entity oa:hasBody ?link }
 
 }
 LIMIT 100
