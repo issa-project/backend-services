@@ -8,10 +8,16 @@ function replaceAll(str, find, replace) {
     return str.replace(new RegExp(find, 'g'), replace);
 }
 
+/**
+ * Read a SPARQL query template and replace the {id} placeholder
+ * @param template file name
+ * @param id value to replace "{id}" with
+ * @returns SPARQL query string
+ */
 function readTemplate(template, id) {
-    let queryF = fs.readFileSync('public/queries/' + template, 'utf8');
-    let queryWithId = replaceAll(queryF, "{id}", idArticle);
-    return queryWithId;
+    let queryTpl = fs.readFileSync('public/queries/' + template, 'utf8');
+    let query = replaceAll(queryTpl, "{id}", id);
+    return query;
 }
 
 
@@ -23,24 +29,20 @@ router.get('/', function (req, res, next) {
 
 /* GET article title */
 router.get('/getArticleTitle/:id', (req, res) => {
-    var idArticle = req.params.id;
+    var articleId = req.params.id;
     const url = process.env.ISSA_SPARQL_ENDPOINT;
-    var idArticleFinal = "<" + process.env.RESOURCES_NAMESPACE + idArticle + ">";
-    let query = readTemplate("getArticleTitle.sparql", idArticleFinal);
-
+    var articleUri = process.env.RESOURCES_NAMESPACE + articleId;
+    let query = readTemplate("getArticleTitle.sparql", articleUri);
     console.log("----------->Read template : query : " + query);
-    //console.log("-----------> article id : "+idArticle)
 
     (async () => {
         let cons;
         let result;
-
         try {
             result = await d3.sparql(url, query).then((data) => {
                 cons = console.log("----------------------->" + data);
                 return data;
             }).then(res => res);
-
 
         } catch (err) {
             console.log("-------------> Error return by sparqlEndpoint : " + err);
@@ -54,11 +56,12 @@ router.get('/getArticleTitle/:id', (req, res) => {
 /*  GET article metaData (title , date , articleType ... )  without the authors */
 
 router.get('/getArticleMetadata/:id', (req, res) => {
-    var idArticle = req.params.id;
+    var articleId = req.params.id;
     const url = process.env.ISSA_SPARQL_ENDPOINT;
-    var idArticleFinal = "<" + process.env.RESOURCES_NAMESPACE + idArticle + ">";
-    let query = readTemplate("getArticleMetadata.sparql", idArticleFinal);
+    var articleUri = process.env.RESOURCES_NAMESPACE + articleId;
+    let query = readTemplate("getArticleMetadata.sparql", articleUri);
     console.log("----------->Read template : query : " + query);
+
     (async () => {
         let cons;
         let result;
@@ -67,7 +70,6 @@ router.get('/getArticleMetadata/:id', (req, res) => {
             result = await d3.sparql(url, query).then((data) => {
                 cons = console.log("----------------------->" + data);
                 return data;
-
             }).then(res => res);
 
         } catch (err) {
@@ -82,19 +84,18 @@ router.get('/getArticleMetadata/:id', (req, res) => {
 /* GET article authors*/
 
 router.get('/getArticleAuthors/:id', (req, res) => {
-    var idArticle = req.params.id;
+    var articleId = req.params.id;
     const url = process.env.ISSA_SPARQL_ENDPOINT;
-    var idArticleFinal = "<" + process.env.RESOURCES_NAMESPACE + idArticle + ">";
-    let query = readTemplate("getArticleAuthors.sparql", idArticleFinal);
+    var articleUri = process.env.RESOURCES_NAMESPACE + articleId;
+    let query = readTemplate("getArticleAuthors.sparql", articleUri);
+
     (async () => {
         let cons;
         let result;
-
         try {
             result = await d3.sparql(url, query).then((data) => {
                 cons = console.log("----------------------->" + data);
                 return data;
-
             }).then(res => res);
 
         } catch (err) {
@@ -109,10 +110,11 @@ router.get('/getArticleAuthors/:id', (req, res) => {
 /* Get named entities */
 
 router.get('/getAbstractNamedEntities/:id', (req, res) => {
-    var idArticle = req.params.id;
+    var articleId = req.params.id;
     const url = process.env.ISSA_SPARQL_ENDPOINT;
-    var idArticleFinal = "<" + process.env.RESOURCES_NAMESPACE + idArticle + ">";
-    let query = readTemplate("getAbstractNamedEntities.sparql", idArticleFinal);
+    var articleUri = process.env.RESOURCES_NAMESPACE + articleId + "#abstract";
+    let query = readTemplate("getAbstractNamedEntities.sparql", articleUri);
+
     (async () => {
         let cons;
         let result;
@@ -121,7 +123,6 @@ router.get('/getAbstractNamedEntities/:id', (req, res) => {
             result = await d3.sparql(url, query).then((data) => {
                 cons = console.log("----------------------->" + data);
                 return data;
-
             }).then(res => res);
 
         } catch (err) {
@@ -135,19 +136,18 @@ router.get('/getAbstractNamedEntities/:id', (req, res) => {
 /* Get global descriptors : The global descriptors are concepts characterizing the article as a whole */
 
 router.get('/getArticleDescriptors/:id', (req, res) => {
-    var idArticle = req.params.id;
+    var articleId = req.params.id;
     const url = process.env.ISSA_SPARQL_ENDPOINT;
-    var idArticleFinal = "<" + process.env.RESOURCES_NAMESPACE + idArticle + ">";
-    let query = readTemplate("getArticleDescriptors.sparql", idArticleFinal);
+    var articleUri = process.env.RESOURCES_NAMESPACE + articleId;
+    let query = readTemplate("getArticleDescriptors.sparql", articleUri);
+
     (async () => {
         let cons;
         let result;
-
         try {
             result = await d3.sparql(url, query).then((data) => {
                 cons = console.log("----------------------->" + data);
                 return data;
-
             }).then(res => res);
 
         } catch (err) {
@@ -155,7 +155,6 @@ router.get('/getArticleDescriptors/:id', (req, res) => {
         }
         res.status(200).json({result})
     })()
-
 });
 
 module.exports = router;

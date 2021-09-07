@@ -1,9 +1,14 @@
-select ?nameEntity ?startPos ?endPos ?link
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+prefix schema: <http://schema.org/>
+prefix oa: <http://www.w3.org/ns/oa#>
+select ?entityText ?startPos ?endPos ?link
 where {
-    ?entity schema:about {idArticle} .
-    ?entity oa:hasTarget ?z.
-    OPTIONAL { ?z oa:hasSelector [oa:exact ?nameEntity].}
-    OPTIONAL { ?z oa:hasSelector [oa:start ?startPos].}
+    []  a oa:Annotation;
+    oa:hasBody ?link;
+    oa:hasTarget ?z.
+
+    ?z oa:hasSource <{id}>.
+    OPTIONAL { ?z oa:hasSelector [oa:exact ?entityText]. }
+    OPTIONAL { ?z oa:hasSelector [oa:start ?startPos]. }
     OPTIONAL { ?z oa:hasSelector [oa:end ?endPos]. }
-    OPTIONAL { ?entity oa:hasBody ?link }
 }

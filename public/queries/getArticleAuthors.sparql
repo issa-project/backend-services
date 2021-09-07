@@ -1,4 +1,4 @@
 select *
 where {
-{idArticle} dce:creator ?authors.
-}LIMIT 100
+    <{id}> dce:creator ?authors.
+}

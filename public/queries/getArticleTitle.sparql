@@ -1,4 +1,4 @@
 select *
 where {
-    {idArticle} dct:title ?title.
+    <{id}> dct:title ?title.
 }

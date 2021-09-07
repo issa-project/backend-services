@@ -1,16 +1,16 @@
 select *
 where {
-    OPTIONAL { {idArticle} dct:title ?title.}
-    OPTIONAL { {idArticle} dct:issued ?date.}
-    OPTIONAL { {idArticle} schema:publication ?pub.}
-    OPTIONAL { {idArticle} dct:license ?license.}
-    OPTIONAL { {idArticle} bibo:doi ?doi.}
-    OPTIONAL { {idArticle} bibo:pmid ?pmid.}
-    OPTIONAL { {idArticle} fabio:hasPubMedId ?hasPubMedId.}
-    OPTIONAL { {idArticle} dct:source ?source.}
-    OPTIONAL { {idArticle} schema:url ?url.}
-    OPTIONAL { {idArticle} dce:language ?lang.}
-    OPTIONAL { {idArticle} dct:language ?lang2.}
-    OPTIONAL { {idArticle} dct:abstract [rdf:value ?abs].}
-    OPTIONAL { {idArticle} schema:downloadUrl ?linkPDF. }
+    OPTIONAL { <{id}> dct:title ?title.}
+    OPTIONAL { <{id}> dct:issued ?date.}
+    OPTIONAL { <{id}> schema:publication ?pub.}
+    OPTIONAL { <{id}> dct:license ?license.}
+    OPTIONAL { <{id}> bibo:doi ?doi.}
+    OPTIONAL { <{id}> bibo:pmid ?pmid.}
+    OPTIONAL { <{id}> fabio:hasPubMedId ?hasPubMedId.}
+    OPTIONAL { <{id}> dct:source ?source.}
+    OPTIONAL { <{id}> schema:url ?url.}
+    OPTIONAL { <{id}> dce:language ?lang.}
+    OPTIONAL { <{id}> dct:language ?lang2.}
+    OPTIONAL { <{id}> dct:abstract [rdf:value ?abs].}
+    OPTIONAL { <{id}> schema:downloadUrl ?linkPDF. }
 }

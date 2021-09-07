@@ -1,7 +1,7 @@
 select *
 where {
     ?Descriptor
-        oa:hasTarget {idArticle};
+        oa:hasTarget <{id}>;
         oa:hasBody ?linkDescriptor.
     optional { ?Descriptor rdfs:label ?nameDescriptor. }
 }
