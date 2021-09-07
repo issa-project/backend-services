@@ -1,6 +1,7 @@
 select *
 where {
-?Descriptor oa:hasTarget {idArticle} .
-?Descriptor oa:hasBody ?linkDescriptor.
-?Descriptor rdfs:label ?nameDescriptor.
-}LIMIT 100
+    ?Descriptor
+        oa:hasTarget {idArticle};
+        oa:hasBody ?linkDescriptor.
+    optional { ?Descriptor rdfs:label ?nameDescriptor. }
+}

@@ -1,4 +1,4 @@
 select *
 where {
-{idArticle} dct:title ?title.
-}LIMIT 10
+    {idArticle} dct:title ?title.
+}
