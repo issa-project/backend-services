@@ -8,9 +8,9 @@ function replaceAll(str, find, replace) {
     return str.replace(new RegExp(find, 'g'), replace);
 }
 
-function readTemplate(template, idArticle) {
-    let queryF = fs.readFileSync('public/sparqlTemplate/' + template, 'utf8');
-    let queryWithId = replaceAll(queryF, "{idArticle}", idArticle);
+function readTemplate(template, id) {
+    let queryF = fs.readFileSync('public/queries/' + template, 'utf8');
+    let queryWithId = replaceAll(queryF, "{id}", idArticle);
     return queryWithId;
 }
 
@@ -26,7 +26,7 @@ router.get('/getArticleTitle/:id', (req, res) => {
     var idArticle = req.params.id;
     const url = process.env.ISSA_SPARQL_ENDPOINT;
     var idArticleFinal = "<" + process.env.RESOURCES_NAMESPACE + idArticle + ">";
-    let query = readTemplate("getArticleTitle.txt", idArticleFinal);
+    let query = readTemplate("getArticleTitle.sparql", idArticleFinal);
 
     console.log("----------->Read template : query : " + query);
     //console.log("-----------> article id : "+idArticle)
@@ -57,7 +57,7 @@ router.get('/getArticleMetadata/:id', (req, res) => {
     var idArticle = req.params.id;
     const url = process.env.ISSA_SPARQL_ENDPOINT;
     var idArticleFinal = "<" + process.env.RESOURCES_NAMESPACE + idArticle + ">";
-    let query = readTemplate("getArticleMetadata.txt", idArticleFinal);
+    let query = readTemplate("getArticleMetadata.sparql", idArticleFinal);
     console.log("----------->Read template : query : " + query);
     (async () => {
         let cons;
@@ -85,7 +85,7 @@ router.get('/getArticleAuthors/:id', (req, res) => {
     var idArticle = req.params.id;
     const url = process.env.ISSA_SPARQL_ENDPOINT;
     var idArticleFinal = "<" + process.env.RESOURCES_NAMESPACE + idArticle + ">";
-    let query = readTemplate("getArticleAuthors.txt", idArticleFinal);
+    let query = readTemplate("getArticleAuthors.sparql", idArticleFinal);
     (async () => {
         let cons;
         let result;
@@ -112,7 +112,7 @@ router.get('/getAbstractNamedEntities/:id', (req, res) => {
     var idArticle = req.params.id;
     const url = process.env.ISSA_SPARQL_ENDPOINT;
     var idArticleFinal = "<" + process.env.RESOURCES_NAMESPACE + idArticle + ">";
-    let query = readTemplate("getAbstractNamedEntities.txt", idArticleFinal);
+    let query = readTemplate("getAbstractNamedEntities.sparql", idArticleFinal);
     (async () => {
         let cons;
         let result;
@@ -138,7 +138,7 @@ router.get('/getArticleDescriptors/:id', (req, res) => {
     var idArticle = req.params.id;
     const url = process.env.ISSA_SPARQL_ENDPOINT;
     var idArticleFinal = "<" + process.env.RESOURCES_NAMESPACE + idArticle + ">";
-    let query = readTemplate("getArticleDescriptors.txt", idArticleFinal);
+    let query = readTemplate("getArticleDescriptors.sparql", idArticleFinal);
     (async () => {
         let cons;
         let result;
