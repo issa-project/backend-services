@@ -1,7 +1,8 @@
 select *
 where {
-    ?Descriptor
+    ?descriptor
         oa:hasTarget <{id}>;
-        oa:hasBody ?linkDescriptor.
-    optional { ?Descriptor rdfs:label ?nameDescriptor. }
+        oa:hasBody ?entityUri.
+    OPTIONAL { ?descriptor rdfs:label ?descriptorLabel. }
+    OPTIONAL { ?entityUri rdfs:label ?entityLabel. FILTER ( lang(?entityLabel) = "en" ) }
 }
