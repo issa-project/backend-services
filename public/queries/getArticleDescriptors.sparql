@@ -1,8 +1,8 @@
-select *
+select ?descriptorText ?entityUri ?entityLabel
 where {
     ?descriptor
         oa:hasTarget <{id}>;
         oa:hasBody ?entityUri.
-    OPTIONAL { ?descriptor rdfs:label ?descriptorLabel. }
+    OPTIONAL { ?descriptor rdfs:label ?descriptorText. }
     OPTIONAL { ?entityUri rdfs:label ?entityLabel. FILTER ( lang(?entityLabel) = "en" ) }
 }
