@@ -1,4 +1,0 @@
-select *
-where {
-    <{id}> dct:title ?title.
-}
