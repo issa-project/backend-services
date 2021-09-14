@@ -1,9 +1,13 @@
 var express = require('express');
 var router = express.Router();
 let d3 = require('d3-sparql');
+const logger = require("../modules/logger");
+const {isDebug} = require("../modules/logger");
+const log = logger.application;
 require('dotenv').config();
 fs = require('fs');
 
+log.info('Starting up backend services');
 
 /**
  * Replace all occurrences if "find" with "replace" in string "template"
@@ -30,9 +34,9 @@ function readTemplate(template, id) {
 
 
 /* GET home page. */
-router.get('/', function (req, res, next) {
+/* router.get('/', function (req, res, next) {
     res.render('index', {title: 'Express'});
-});
+}); */
 
 
 /**
@@ -42,13 +46,19 @@ router.get('/', function (req, res, next) {
 router.get('/getArticleMetadata/', (req, res) => {
     let articleUri = req.query.uri;
     let query = readTemplate("getArticleMetadata.sparql", articleUri);
+    if (log.isDebugEnabled()) {
+        log.debug('getArticleMetadata - Will submit SPARQL query: \n' + query);
+    }
 
     (async () => {
         let cons;
         let result;
         try {
             result = await d3.sparql(process.env.ISSA_SPARQL_ENDPOINT, query).then((data) => {
-                //console.log("----------------------->" + data);
+                if (log.isTraceEnabled()) {
+                    log.trace('getArticleMetadata - SPARQL response: ');
+                    data.forEach(res => log.debug(res));
+                }
                 return data;
             }).then(res => res);
 
@@ -66,13 +76,19 @@ router.get('/getArticleMetadata/', (req, res) => {
 router.get('/getArticleAuthors/', (req, res) => {
     let articleUri = req.query.uri;
     let query = readTemplate("getArticleAuthors.sparql", articleUri);
+    if (log.isDebugEnabled()) {
+        log.debug('getArticleAuthors - Will submit SPARQL query: \n' + query);
+    }
 
     (async () => {
         let cons;
         let result;
         try {
             result = await d3.sparql(process.env.ISSA_SPARQL_ENDPOINT, query).then((data) => {
-                //console.log("----------------------->" + data);
+                if (log.isTraceEnabled()) {
+                    log.trace('getArticleAuthors - SPARQL response: ');
+                    data.forEach(res => log.debug(res));
+                }
                 return data;
             }).then(res => res);
 
@@ -91,6 +107,9 @@ router.get('/getAbstractNamedEntities/', (req, res) => {
     let articleUri = req.query.uri;
     articleUri = articleUri + "#abstract";
     let query = readTemplate("getAbstractNamedEntities.sparql", articleUri);
+    if (log.isDebugEnabled()) {
+        log.debug('getAbstractNamedEntities - Will submit SPARQL query: \n' + query);
+    }
 
     (async () => {
         let cons;
@@ -98,7 +117,10 @@ router.get('/getAbstractNamedEntities/', (req, res) => {
 
         try {
             result = await d3.sparql(process.env.ISSA_SPARQL_ENDPOINT, query).then((data) => {
-                //console.log("----------------------->" + data);
+                if (log.isTraceEnabled()) {
+                    log.trace('getAbstractNamedEntities - SPARQL response: ');
+                    data.forEach(res => log.debug(res));
+                }
                 return data;
             }).then(res => res);
 
@@ -115,13 +137,19 @@ router.get('/getAbstractNamedEntities/', (req, res) => {
 router.get('/getArticleDescriptors/', (req, res) => {
     let articleUri = req.query.uri;
     let query = readTemplate("getArticleDescriptors.sparql", articleUri);
+    if (log.isDebugEnabled()) {
+        log.debug('getArticleDescriptors - Will submit SPARQL query: \n' + query);
+    }
 
     (async () => {
         let cons;
         let result;
         try {
             result = await d3.sparql(process.env.ISSA_SPARQL_ENDPOINT, query).then((data) => {
-                //console.log("----------------------->" + data);
+                if (log.isTraceEnabled()) {
+                    log.trace('getArticleDescriptors - SPARQL response: ');
+                    data.forEach(res => log.debug(res));
+                }
                 return data;
             }).then(res => res);
 
@@ -131,7 +159,5 @@ router.get('/getArticleDescriptors/', (req, res) => {
         res.status(200).json({result})
     })()
 });
-
-
 
 module.exports = router;

@@ -1,0 +1,35 @@
+{
+  "appenders": {
+    "out": {
+      "type": "stdout",
+      "layout": {
+        "type": "pattern",
+        "pattern": "[%d{yyyy-MM-dd hh:mm:ss}] %p - %m"
+      }
+    },
+    "file": {
+      "type": "dateFile",
+      "filename": "log/application.log",
+      "pattern": "-yyyy-MM-dd",
+      "backups": 3,
+      "layout": {
+        "type": "pattern",
+        "pattern": "[%d{yyyy-MM-dd hh:mm:ss}] %p - %m"
+      }
+    }
+  },
+  "categories": {
+    "default": {
+      "appenders": [
+        "out"
+      ],
+      "level": "ALL"
+    },
+    "application": {
+      "appenders": [
+        "file"
+      ],
+      "level": "INFO"
+    }
+  }
+}

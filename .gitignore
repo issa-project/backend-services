@@ -8,6 +8,7 @@
 /build
 /idea
 .idea
+log
 
 # misc
 .DS_Store
