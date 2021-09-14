@@ -1,17 +1,46 @@
-## Install & Run
+# ISSA Web Application Backend Services
 
-Install the dependencies with `npm install`
-Run the application with `npm start`
+The [ISSA project](https://issa.cirad.fr/) focuses on the semantic indexing of scientific publications in an open archive.
+
+This repository is the backend part of a web application meant to demonstrate the interest and use of such a semantic index for researchers and librarians. The frontend application is available in the [visualization repository](https://github.com/issa-project/visualization).
+
+
+## Installation
+
+Pre-requisite: [node.js](https://nodejs.org/) and npm
+
+Install the dependencies with:
+```bash
+npm install
+```
+
+
+## Run
+
+Run the application with:
+```bash
+npm start
+```
+
+By default the node.js server listens on port 3000. This can be changed in file [.env](.env).
+
+Make sure the server is properly started by pointing your browser to:
+```
+http://localhost:3000/getArticleMetadata?uri=http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f
+```
+(this is an example article URI that may no longer be valid at some point).
+
+
+### Logging
+
+By default, log traces are printed out in file `log/application.log`.
+
+This can be changed by customizing file [config/log4js.json](config/log4js.json).
+Refer to the [Log4JS documentation](https://stritti.github.io/log4js/).
 
 
 ## Run the linter
 
-```
+```bash
 npm run lint
 ```
-Note: The linter will be executed before each commit. If the linter fails then the commit will be canceled.
-
-## Dependencies
-
-The following libraries are used in this Node starter:
-- Express (for building the http API) : https://www.npmjs.com/package/express

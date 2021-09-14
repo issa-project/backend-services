@@ -12,9 +12,10 @@
       "filename": "log/application.log",
       "pattern": "-yyyy-MM-dd",
       "backups": 3,
+      "maxLogSize": 10485760,
       "layout": {
         "type": "pattern",
-        "pattern": "[%d{yyyy-MM-dd hh:mm:ss}] %p - %m"
+        "pattern": "[%d{yyyy-MM-dd hh:mm:ss}] %p %c - %m"
       }
     }
   },
@@ -29,7 +30,7 @@
       "appenders": [
         "file"
       ],
-      "level": "INFO"
+      "level": "DEBUG"
     }
   }
 }
