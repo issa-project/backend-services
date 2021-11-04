@@ -28,7 +28,7 @@
     },
     "application": {
       "appenders": [
-        "file"
+        "file", "out"
       ],
       "level": "DEBUG"
     }
