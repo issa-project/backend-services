@@ -67,12 +67,13 @@ router.get('/getArticleMetadata/', (req, res) => {
         }
         res.status(200).json({result})
     })()
-
 });
 
 
-/* GET article authors*/
-
+/**
+ * GET article authors
+ * @param uri: URL parameter
+ */
 router.get('/getArticleAuthors/', (req, res) => {
     let articleUri = req.query.uri;
     let query = readTemplate("getArticleAuthors.sparql", articleUri);
@@ -97,28 +98,28 @@ router.get('/getArticleAuthors/', (req, res) => {
         }
         res.status(200).json({result})
     })()
-
 });
 
 
-/* Get named entities */
-
+/**
+ * Get named entities
+ * @param uri: URL parameter
+ */
 router.get('/getAbstractNamedEntities/', (req, res) => {
     let articleUri = req.query.uri;
     articleUri = articleUri + "#abstract";
-    let query = readTemplate("getAbstractNamedEntities.sparql", articleUri);
+    let query = readTemplate("getNamedEntities.sparql", articleUri);
     if (log.isDebugEnabled()) {
-        log.debug('getAbstractNamedEntities - Will submit SPARQL query: \n' + query);
+        log.debug('getNamedEntities - Will submit SPARQL query: \n' + query);
     }
 
     (async () => {
         let cons;
         let result;
-
         try {
             result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
                 if (log.isTraceEnabled()) {
-                    log.trace('getAbstractNamedEntities - SPARQL response: ');
+                    log.trace('getNamedEntities - SPARQL response: ');
                     data.forEach(res => log.debug(res));
                 }
                 return data;
@@ -129,11 +130,44 @@ router.get('/getAbstractNamedEntities/', (req, res) => {
         }
         res.status(200).json({result})
     })()
-
 });
 
-/* Get global descriptors : The global descriptors are concepts characterizing the article as a whole */
 
+/**
+ * Get the geographical named entities whatever the article part
+ * @param uri: URL parameter
+ */
+router.get('/getGeographicalNamedEntities/', (req, res) => {
+    let articleUri = req.query.uri;
+    let query = readTemplate("getGeographicalNamedEntities.sparql", articleUri);
+    if (log.isDebugEnabled()) {
+        log.debug('getGeographicalNamedEntities - Will submit SPARQL query: \n' + query);
+    }
+
+    (async () => {
+        let cons;
+        let result;
+        try {
+            result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
+                if (log.isTraceEnabled()) {
+                    log.trace('getGeographicalNamedEntities - SPARQL response: ');
+                    data.forEach(res => log.debug(res));
+                }
+                return data;
+            }).then(res => res);
+
+        } catch (err) {
+            result = err
+        }
+        res.status(200).json({result})
+    })()
+});
+
+
+/**
+ * Get global descriptors : The global descriptors are concepts characterizing the article as a whole
+ * @param uri: URL parameter
+ */
 router.get('/getArticleDescriptors/', (req, res) => {
     let articleUri = req.query.uri;
     let query = readTemplate("getArticleDescriptors.sparql", articleUri);
