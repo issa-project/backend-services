@@ -26,7 +26,7 @@ By default the node.js server listens on port 3000. This can be changed in file 
 
 Make sure the server is properly started by pointing your browser to:
 ```
-http://localhost:3000/getArticleMetadata?uri=http://ns.inria.fr/issa/f74923b3ce82c984a7ae3e0c2754c9e33c60554f
+http://localhost:3000/getArticleMetadata?uri=http://data-issa.cirad.fr/article/592919
 ```
 (this is an example article URI that may no longer be valid at some point).
 
