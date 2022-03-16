@@ -7,11 +7,11 @@ This repository is the backend part of a web application meant to demonstrate th
 
 ## Installation
 
-Pre-requisite: [node.js](https://nodejs.org/) and npm
+Pre-requisite: [node.js](https://nodejs.org/) and yarn
 
 Install the dependencies with:
 ```bash
-npm install
+yarn build
 ```
 
 
@@ -19,7 +19,7 @@ npm install
 
 Run the application with:
 ```bash
-npm start
+yarn start
 ```
 
 By default the node.js server listens on port 3000. This can be changed in file [.env](.env).

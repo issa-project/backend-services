@@ -57,7 +57,7 @@ router.get('/getArticleMetadata/', (req, res) => {
             result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
                 if (log.isTraceEnabled()) {
                     log.trace('getArticleMetadata - SPARQL response: ');
-                    data.forEach(res => log.debug(res));
+                    data.forEach(res => log.trace(res));
                 }
                 return data;
             }).then(res => res);
@@ -88,7 +88,7 @@ router.get('/getArticleAuthors/', (req, res) => {
             result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
                 if (log.isTraceEnabled()) {
                     log.trace('getArticleAuthors - SPARQL response: ');
-                    data.forEach(res => log.debug(res));
+                    data.forEach(res => log.trace(res));
                 }
                 return data;
             }).then(res => res);
@@ -120,7 +120,7 @@ router.get('/getAbstractNamedEntities/', (req, res) => {
             result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
                 if (log.isTraceEnabled()) {
                     log.trace('getNamedEntities - SPARQL response: ');
-                    data.forEach(res => log.debug(res));
+                    data.forEach(res => log.trace(res));
                 }
                 return data;
             }).then(res => res);
@@ -151,7 +151,7 @@ router.get('/getGeographicalNamedEntities/', (req, res) => {
             result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
                 if (log.isTraceEnabled()) {
                     log.trace('getGeographicalNamedEntities - SPARQL response: ');
-                    data.forEach(res => log.debug(res));
+                    data.forEach(res => log.trace(res));
                 }
                 return data;
             }).then(res => res);
@@ -182,7 +182,7 @@ router.get('/getArticleDescriptors/', (req, res) => {
             result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
                 if (log.isTraceEnabled()) {
                     log.trace('getArticleDescriptors - SPARQL response: ');
-                    data.forEach(res => log.debug(res));
+                    data.forEach(res => log.trace(res));
                 }
                 return data;
             }).then(res => res);
