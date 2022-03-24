@@ -1,11 +1,12 @@
-prefix bibo:   <http://purl.org/ontology/bibo/>
-prefix dct:    <http://purl.org/dc/terms/>
-prefix dce:    <http://purl.org/dc/elements/1.1/>
-prefix fabio:  <http://purl.org/spar/fabio/>
-prefix schema: <http://schema.org/>
+PREFIX bibo:   <http://purl.org/ontology/bibo/>
+PREFIX dct:    <http://purl.org/dc/terms/>
+PREFIX dce:    <http://purl.org/dc/elements/1.1/>
+PREFIX fabio:  <http://purl.org/spar/fabio/>
+PREFIX schema: <http://schema.org/>
 
-select *
-where {
+SELECT *
+FROM <http://data-issa.cirad.fr/graph/articles>
+WHERE {
     <{id}> a bibo:AcademicArticle, fabio:ResearchPaper.
 
     OPTIONAL { <{id}> dct:title ?title.}

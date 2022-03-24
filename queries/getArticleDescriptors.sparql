@@ -1,14 +1,18 @@
 prefix bibo:   <http://purl.org/ontology/bibo/>
-prefix dct:    <http://purl.org/dc/terms/>
-prefix fabio:  <http://purl.org/spar/fabio/>
-prefix oa:     <http://www.w3.org/ns/oa#>
-prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
-prefix schema: <http://schema.org/>
-prefix skos:   <http://www.w3.org/2008/05/skos-xl>
-prefix skosxl: <http://www.w3.org/2008/05/skos-xl#>
+PREFIX dct:    <http://purl.org/dc/terms/>
+PREFIX fabio:  <http://purl.org/spar/fabio/>
+PREFIX oa:     <http://www.w3.org/ns/oa#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <http://schema.org/>
+PREFIX skos:   <http://www.w3.org/2008/05/skos-xl>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 
-select ?entityUri ?entityLabel
-where {
+SELECT DISTINCT ?entityUri ?entityLabel
+FROM <http://data-issa.cirad.fr/graph/articles>
+FROM <http://data-issa.cirad.fr/graph/thematic-descriptors>
+FROM <http://data-issa.cirad.fr/graph/annif-descriptors>
+FROM <http://agrovoc.fao.org/graph>
+WHERE {
     <{id}> a bibo:AcademicArticle, fabio:ResearchPaper.
 
     ?descriptor
@@ -16,7 +20,8 @@ where {
         oa:hasBody ?entityUri.
 
     OPTIONAL {
+        # Find labes that may be gven with various properties depending on the data source
         ?entityUri rdfs:label|skos:prefLabel|(skosxl:prefLabel/skosxl:literalForm)|dct:title|schema:name ?entityLabel.
-        FILTER(lang(?entityLabel) = "en")
+        FILTER langMatches(lang(?entityLabel), "en")
     }
 }

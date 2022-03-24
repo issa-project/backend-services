@@ -1,8 +1,9 @@
-prefix bibo:   <http://purl.org/ontology/bibo/>
-prefix dce:    <http://purl.org/dc/elements/1.1/>
+PREFIX bibo:   <http://purl.org/ontology/bibo/>
+PREFIX dce:    <http://purl.org/dc/elements/1.1/>
 
-select *
-where {
+SELECT *
+FROM <http://data-issa.cirad.fr/graph/articles>
+WHERE {
     <{id}>
         a bibo:AcademicArticle;
         dce:creator ?authors.
