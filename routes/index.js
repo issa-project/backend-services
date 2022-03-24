@@ -137,11 +137,11 @@ router.get('/getAbstractNamedEntities/', (req, res) => {
  * Get the geographical named entities whatever the article part
  * @param uri: URL parameter
  */
-router.get('/getGeographicalNamedEntities/', (req, res) => {
+router.get('/getGeographicNamedEntities/', (req, res) => {
     let articleUri = req.query.uri;
-    let query = readTemplate("getGeographicalNamedEntities.sparql", articleUri);
+    let query = readTemplate("getGeographicNamedEntities.sparql", articleUri);
     if (log.isDebugEnabled()) {
-        log.debug('getGeographicalNamedEntities - Will submit SPARQL query: \n' + query);
+        log.debug('getGeographicNamedEntities - Will submit SPARQL query: \n' + query);
     }
 
     (async () => {
