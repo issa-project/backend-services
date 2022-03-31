@@ -1,16 +1,16 @@
 PREFIX oa:     <http://www.w3.org/ns/oa#>
 PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT ?entityText ?startPos ?endPos ?entityUri ?entityLabel
+SELECT DISTINCT ?entityText ?startPos ?endPos ?entityUri ?entityLabel
 WHERE {
     []  a oa:Annotation;
         oa:hasBody ?entityUri;
         oa:hasTarget ?z.
 
     ?z oa:hasSource <{id}>.
-    OPTIONAL { ?z oa:hasSelector [oa:exact ?entityText]. }
-    OPTIONAL { ?z oa:hasSelector [oa:start ?startPos]. }
-    OPTIONAL { ?z oa:hasSelector [oa:end ?endPos]. }
+    ?z oa:hasSelector [ oa:exact ?entityText ].
+    ?z oa:hasSelector [ oa:start ?startPos ].
+    OPTIONAL { ?z oa:hasSelector [ oa:end ?endPos ]. }
 
     OPTIONAL {
         ?entityUri rdfs:label ?entityLabel.
