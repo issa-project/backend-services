@@ -44,3 +44,12 @@ Refer to the [Log4JS documentation](https://stritti.github.io/log4js/).
 ```bash
 npm run lint
 ```
+
+## License
+
+See the [LICENSE file](LICENSE).
+
+
+## Cite this work
+
+Youssef MEKOUAR, Franck MICHEL, ISSA Project (2022). ISSA visualization backend application. https://github.com/issa-project/web-visualization/.
