@@ -2,12 +2,13 @@ PREFIX bibo:   <http://purl.org/ontology/bibo/>
 PREFIX dct:    <http://purl.org/dc/terms/>
 PREFIX dce:    <http://purl.org/dc/elements/1.1/>
 PREFIX fabio:  <http://purl.org/spar/fabio/>
+PREFIX prov:   <http://www.w3.org/ns/prov#>
 PREFIX schema: <http://schema.org/>
 
 SELECT *
 FROM <http://data-issa.cirad.fr/graph/articles>
 WHERE {
-    <{id}> a bibo:AcademicArticle, fabio:ResearchPaper.
+    <{id}> a prov:Entity.
 
     OPTIONAL { <{id}> dct:title ?title.}
     OPTIONAL { <{id}> dct:issued ?date.}
