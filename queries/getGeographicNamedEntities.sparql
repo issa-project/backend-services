@@ -9,7 +9,6 @@ FROM <http://geonames.org/graph>
 FROM <http://data-issa.cirad.fr/graph/geographic-nes>
 WHERE {
     <{id}>
-        a prov:Entity;
         ^schema:about [ oa:hasBody ?entityUri ].
 
     ?entityUri
