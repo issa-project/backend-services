@@ -63,6 +63,7 @@ router.get('/getArticleMetadata/', (req, res) => {
             }).then(res => res);
 
         } catch (err) {
+            log.error('getArticleMetadata error: ' + err);
             result = err
         }
         res.status(200).json({result})
@@ -94,6 +95,7 @@ router.get('/getArticleAuthors/', (req, res) => {
             }).then(res => res);
 
         } catch (err) {
+            log.error('getArticleAuthors error: ' + err);
             result = err
         }
         res.status(200).json({result})
@@ -116,6 +118,7 @@ router.get('/getAbstractNamedEntities/', (req, res) => {
     (async () => {
         let cons;
         let result;
+
         try {
             result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
                 if (log.isTraceEnabled()) {
@@ -126,6 +129,7 @@ router.get('/getAbstractNamedEntities/', (req, res) => {
             }).then(res => res);
 
         } catch (err) {
+            log.error('getAbstractNamedEntities error: ' + err);
             result = err
         }
         res.status(200).json({result})
@@ -147,8 +151,10 @@ router.get('/getGeographicNamedEntities/', (req, res) => {
     (async () => {
         let cons;
         let result;
+
+        var opts = { method: 'POST' };
         try {
-            result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
+            result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query, opts).then((data) => {
                 if (log.isTraceEnabled()) {
                     log.trace('getGeographicalNamedEntities - SPARQL response: ');
                     data.forEach(res => log.trace(res));
@@ -157,6 +163,7 @@ router.get('/getGeographicNamedEntities/', (req, res) => {
             }).then(res => res);
 
         } catch (err) {
+            log.error('getGeographicalNamedEntities error: ' + err);
             result = err
         }
         res.status(200).json({result})
@@ -188,6 +195,7 @@ router.get('/getArticleDescriptors/', (req, res) => {
             }).then(res => res);
 
         } catch (err) {
+            log.error('getArticleDescriptors error: ' + err);
             result = err
         }
         res.status(200).json({result})
