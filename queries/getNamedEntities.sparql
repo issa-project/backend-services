@@ -1,5 +1,9 @@
+PREFIX dct:    <http://purl.org/dc/terms/>
 PREFIX oa:     <http://www.w3.org/ns/oa#>
 PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <http://schema.org/>
+PREFIX skos:   <http://www.w3.org/2008/05/skos-xl>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 
 SELECT DISTINCT ?entityText ?startPos ?endPos ?entityUri ?entityLabel
 WHERE {
@@ -13,7 +17,7 @@ WHERE {
     OPTIONAL { ?z oa:hasSelector [ oa:end ?endPos ]. }
 
     OPTIONAL {
-        ?entityUri rdfs:label ?entityLabel.
+        ?entityUri rdfs:label|skos:prefLabel|(skosxl:prefLabel/skosxl:literalForm)|dct:title|schema:name ?entityLabel.
         FILTER langMatches(lang(?entityLabel), "en")
     }
 }
