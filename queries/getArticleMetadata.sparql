@@ -6,8 +6,8 @@ PREFIX prov:   <http://www.w3.org/ns/prov#>
 PREFIX schema: <http://schema.org/>
 
 SELECT *
-FROM <http://data-issa.cirad.fr/graph/articles>
-FROM <http://data-issa.cirad.fr/graph/articles/text>
+FROM <http://data-issa.cirad.fr/graph/documents>
+FROM <http://data-issa.cirad.fr/graph/documents/text>
 WHERE {
     <{id}> a prov:Entity.
 

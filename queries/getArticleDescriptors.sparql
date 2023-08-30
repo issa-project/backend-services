@@ -9,7 +9,7 @@ PREFIX skos:   <http://www.w3.org/2008/05/skos-xl>
 PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 
 SELECT DISTINCT ?entityUri ?entityLabel
-FROM <http://data-issa.cirad.fr/graph/articles>
+FROM <http://data-issa.cirad.fr/graph/documents>
 FROM <http://data-issa.cirad.fr/graph/thematic-descriptors>
 FROM <http://data-issa.cirad.fr/graph/annif-descriptors>
 FROM <http://agrovoc.fao.org/graph>
