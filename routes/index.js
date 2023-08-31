@@ -2,10 +2,9 @@ var express = require('express');
 var router = express.Router();
 let d3 = require('d3-sparql');
 const logger = require("../modules/logger");
-const {isDebug} = require("../modules/logger");
 const log = logger.application;
 require('dotenv').config();
-fs = require('fs');
+let fs = require('fs');
 
 log.info('Starting up backend services');
 
@@ -33,12 +32,6 @@ function readTemplate(template, id) {
 }
 
 
-/* GET home page. */
-/* router.get('/', function (req, res, next) {
-    res.render('index', {title: 'Express'});
-}); */
-
-
 /**
  * Get article metaData (title , date , articleType ... )  without the authors
  * @param uri: URL parameter
@@ -51,7 +44,6 @@ router.get('/getArticleMetadata/', (req, res) => {
     }
 
     (async () => {
-        let cons;
         let result;
         try {
             result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
@@ -83,7 +75,6 @@ router.get('/getArticleAuthors/', (req, res) => {
     }
 
     (async () => {
-        let cons;
         let result;
         try {
             result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
@@ -116,7 +107,6 @@ router.get('/getAbstractNamedEntities/', (req, res) => {
     }
 
     (async () => {
-        let cons;
         let result;
 
         try {
@@ -149,7 +139,6 @@ router.get('/getGeographicNamedEntities/', (req, res) => {
     }
 
     (async () => {
-        let cons;
         let result;
 
         var opts = { method: 'POST' };
@@ -183,7 +172,6 @@ router.get('/getArticleDescriptors/', (req, res) => {
     }
 
     (async () => {
-        let cons;
         let result;
         try {
             result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {

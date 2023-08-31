@@ -1,4 +1,4 @@
-prefix bibo:   <http://purl.org/ontology/bibo/>
+PREFIX bibo:   <http://purl.org/ontology/bibo/>
 PREFIX dct:    <http://purl.org/dc/terms/>
 PREFIX fabio:  <http://purl.org/spar/fabio/>
 PREFIX oa:     <http://www.w3.org/ns/oa#>
@@ -8,21 +8,34 @@ PREFIX schema: <http://schema.org/>
 PREFIX skos:   <http://www.w3.org/2008/05/skos-xl>
 PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 
-SELECT DISTINCT ?entityUri ?entityLabel
+SELECT DISTINCT ?entityUri ?entityLabel (GROUP_CONCAT(?descriptorType; separator=',') as ?types)
 FROM <http://data-issa.cirad.fr/graph/documents>
-FROM <http://data-issa.cirad.fr/graph/thematic-descriptors>
-FROM <http://data-issa.cirad.fr/graph/annif-descriptors>
+FROM NAMED <http://data-issa.cirad.fr/graph/thematic-descriptors>
+FROM NAMED <http://data-issa.cirad.fr/graph/annif-descriptors>
 FROM <http://agrovoc.fao.org/graph>
 WHERE {
     <{id}> a prov:Entity.
 
-    ?descriptor
-        oa:hasTarget <{id}>;
-        oa:hasBody ?entityUri.
+    { GRAPH <http://data-issa.cirad.fr/graph/thematic-descriptors> {
+        ?descriptor
+            oa:hasTarget <{id}>;
+            oa:hasBody ?entityUri.
+        bind("human" as ?descriptorType)
+    }}
+
+    UNION
+
+    { GRAPH <http://data-issa.cirad.fr/graph/annif-descriptors> {
+        ?descriptor
+            oa:hasTarget <{id}>;
+            oa:hasBody ?entityUri.
+        bind("computed" as ?descriptorType)
+    }}
 
     OPTIONAL {
-        # Find labes that may be gven with various properties depending on the data source
+        # Find labels that may be gven with various properties depending on the data source
         ?entityUri rdfs:label|skos:prefLabel|(skosxl:prefLabel/skosxl:literalForm)|dct:title|schema:name ?entityLabel.
         FILTER langMatches(lang(?entityLabel), "en")
     }
-}
+} GROUP BY ?entityUri ?entityLabel
+  ORDER BY DESC(?types)
