@@ -8,7 +8,7 @@ PREFIX schema: <http://schema.org/>
 PREFIX skos:   <http://www.w3.org/2008/05/skos-xl>
 PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 
-SELECT DISTINCT ?entityUri ?entityLabel (GROUP_CONCAT(?descriptorType; separator=',') as ?types)
+SELECT DISTINCT ?entityUri ?entityLabel ?isGeographicalDescriptor (GROUP_CONCAT(?descriptorType; separator=',') as ?types)
 FROM <http://data-issa.cirad.fr/graph/documents>
 FROM NAMED <http://data-issa.cirad.fr/graph/thematic-descriptors>
 FROM NAMED <http://data-issa.cirad.fr/graph/annif-descriptors>
@@ -37,5 +37,11 @@ WHERE {
         ?entityUri rdfs:label|skos:prefLabel|(skosxl:prefLabel/skosxl:literalForm)|dct:title|schema:name ?entityLabel.
         FILTER langMatches(lang(?entityLabel), "en")
     }
-} GROUP BY ?entityUri ?entityLabel
+
+    OPTIONAL {
+        ?entityUri <http://aims.fao.org/aos/agrontology#isPartOfSubvocabulary> ?subVocabulary .
+        BIND ( REGEX(?subVocabulary, "^Geographical", "i") as ?isGeographicalDescriptor)
+    }
+
+} GROUP BY ?entityUri ?entityLabel ?isGeographicalDescriptor
   ORDER BY DESC(?types)
