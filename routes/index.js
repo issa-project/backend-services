@@ -1,5 +1,5 @@
-var express = require('express');
-var router = express.Router();
+let express = require('express');
+let router = express.Router();
 let d3 = require('d3-sparql');
 const logger = require("../modules/logger");
 const log = logger.application;
@@ -141,7 +141,7 @@ router.get('/getGeographicNamedEntities/', (req, res) => {
     (async () => {
         let result;
 
-        var opts = { method: 'POST' };
+        let opts = { method: 'POST' };
         try {
             result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query, opts).then((data) => {
                 if (log.isTraceEnabled()) {
@@ -184,6 +184,37 @@ router.get('/getArticleDescriptors/', (req, res) => {
 
         } catch (err) {
             log.error('getArticleDescriptors error: ' + err);
+            result = err
+        }
+        res.status(200).json({result})
+    })()
+});
+
+
+/**
+ * Complete the input using the Agrovoc labels
+ * @param input: first characters entered by the use
+ */
+router.get('/autoCompleteAgrovoc/', (req, res) => {
+    let input = req.query.input;
+    let query = readTemplate("autoCompleteAgrovoc.sparql", input);
+    if (log.isDebugEnabled()) {
+        log.debug('autoCompleteAgrovoc - Will submit SPARQL query: \n' + query);
+    }
+
+    (async () => {
+        let result;
+        try {
+            result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
+                if (log.isTraceEnabled()) {
+                    log.trace('autoCompleteAgrovoc - SPARQL response: ');
+                    data.forEach(res => log.trace(res));
+                }
+                return data;
+            }).then(res => res);
+
+        } catch (err) {
+            log.error('autoCompleteAgrovoc error: ' + err);
             result = err
         }
         res.status(200).json({result})

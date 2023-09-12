@@ -1,0 +1,17 @@
+PREFIX skos:   <http://www.w3.org/2004/02/skos/core#>
+
+SELECT distinct ?entityLabel ?entityUri
+FROM <http://agrovoc.fao.org/graph>
+WHERE {
+    {   # First return the labels that starts like the input
+        ?entityUri (skosxl:prefLabel/skosxl:literalForm)|(skosxl:altLabel/skosxl:literalForm) ?entityLabel.
+        FILTER (langMatches(lang(?entityLabel), "en") && strstarts(?entityLabel, "{id}"))
+        BIND(1 as ?priority)
+    }
+    UNION
+    {   # Second, return the labels that contain the input
+        ?entityUri (skosxl:prefLabel/skosxl:literalForm)|(skosxl:altLabel/skosxl:literalForm) ?entityLabel.
+        FILTER (langMatches(lang(?entityLabel), "en") && contains(?entityLabel, "{id}"))
+        BIND(2 as ?priority)
+    }
+} order by ?priority limit 10

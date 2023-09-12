@@ -5,7 +5,7 @@ PREFIX oa:     <http://www.w3.org/ns/oa#>
 PREFIX prov:   <http://www.w3.org/ns/prov#>
 PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX schema: <http://schema.org/>
-PREFIX skos:   <http://www.w3.org/2008/05/skos-xl>
+PREFIX skos:   <http://www.w3.org/2004/02/skos/core#>
 PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 
 SELECT DISTINCT ?entityUri ?entityLabel ?isGeographicalDescriptor (GROUP_CONCAT(?descriptorType; separator=',') as ?types)

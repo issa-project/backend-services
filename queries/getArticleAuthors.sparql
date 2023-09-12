@@ -2,7 +2,7 @@ PREFIX bibo:   <http://purl.org/ontology/bibo/>
 PREFIX dce:    <http://purl.org/dc/elements/1.1/>
 PREFIX prov:   <http://www.w3.org/ns/prov#>
 
-SELECT *
+SELECT ?authors
 FROM <http://data-issa.cirad.fr/graph/documents>
 WHERE {
     <{id}>
