@@ -1,10 +1,12 @@
 let express = require('express');
-let router = express.Router();
-let d3 = require('d3-sparql');
-const logger = require("../modules/logger");
-const log = logger.application;
-require('dotenv').config();
 let fs = require('fs');
+let logger = require("../modules/logger");
+let d3 = require('d3-sparql');
+require('dotenv').config();
+
+let log = logger.application;
+let router = express.Router();
+let agrovoc = require('../data/dumpAgrovocEntities.json')
 
 log.info('Starting up backend services');
 
@@ -56,9 +58,9 @@ router.get('/getArticleMetadata/', (req, res) => {
 
         } catch (err) {
             log.error('getArticleMetadata error: ' + err);
-            result = err
+            result = err;
         }
-        res.status(200).json({result})
+        res.status(200).json({result});
     })()
 });
 
@@ -87,9 +89,9 @@ router.get('/getArticleAuthors/', (req, res) => {
 
         } catch (err) {
             log.error('getArticleAuthors error: ' + err);
-            result = err
+            result = err;
         }
-        res.status(200).json({result})
+        res.status(200).json({result});
     })()
 });
 
@@ -120,9 +122,9 @@ router.get('/getAbstractNamedEntities/', (req, res) => {
 
         } catch (err) {
             log.error('getAbstractNamedEntities error: ' + err);
-            result = err
+            result = err;
         }
-        res.status(200).json({result})
+        res.status(200).json({result});
     })()
 });
 
@@ -141,7 +143,7 @@ router.get('/getGeographicNamedEntities/', (req, res) => {
     (async () => {
         let result;
 
-        let opts = { method: 'POST' };
+        let opts = {method: 'POST'};
         try {
             result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query, opts).then((data) => {
                 if (log.isTraceEnabled()) {
@@ -153,9 +155,9 @@ router.get('/getGeographicNamedEntities/', (req, res) => {
 
         } catch (err) {
             log.error('getGeographicalNamedEntities error: ' + err);
-            result = err
+            result = err;
         }
-        res.status(200).json({result})
+        res.status(200).json({result});
     })()
 });
 
@@ -184,22 +186,22 @@ router.get('/getArticleDescriptors/', (req, res) => {
 
         } catch (err) {
             log.error('getArticleDescriptors error: ' + err);
-            result = err
+            result = err;
         }
-        res.status(200).json({result})
+        res.status(200).json({result});
     })()
 });
 
 
 /**
- * Complete the input using the Agrovoc labels
+ * Complete the user's input using the Agrovoc labels
  * @param input: first characters entered by the use
  */
-router.get('/autoCompleteAgrovoc/', (req, res) => {
+router.get('/autoCompleteAgrovocSparql/', (req, res) => {
     let input = req.query.input;
     let query = readTemplate("autoCompleteAgrovoc.sparql", input);
     if (log.isDebugEnabled()) {
-        log.debug('autoCompleteAgrovoc - Will submit SPARQL query: \n' + query);
+        log.debug('autoCompleteAgrovocSparql - Will submit SPARQL query: \n' + query);
     }
 
     (async () => {
@@ -207,18 +209,62 @@ router.get('/autoCompleteAgrovoc/', (req, res) => {
         try {
             result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
                 if (log.isTraceEnabled()) {
-                    log.trace('autoCompleteAgrovoc - SPARQL response: ');
+                    log.trace('autoCompleteAgrovocSparql - SPARQL response: ');
                     data.forEach(res => log.trace(res));
                 }
                 return data;
             }).then(res => res);
 
         } catch (err) {
-            log.error('autoCompleteAgrovoc error: ' + err);
-            result = err
+            log.error('autoCompleteAgrovocSparql error: ' + err);
+            result = err;
         }
-        res.status(200).json({result})
+        res.status(200).json({result});
     })()
+});
+
+
+/**
+ * Complete the user's input using the Agrovoc labels
+ * @param input: first characters entered by the use
+ */
+router.get('/autoCompleteAgrovoc/', (req, res) => {
+    let input = req.query.input;
+
+    // Count the number of entities selected (to return ony a maximum number)
+    let _count = 0;
+
+    // Search for entities whose label starts like the input
+    let _startsWith = agrovoc.filter(_entity => {
+        if (_count < process.env.SEARCH_MAX_AUTOCOMPLETE) {
+            if (_entity.entityLabel.startsWith(input)) {
+                _count++;
+                return true;
+            }
+        } else return false;
+    });
+    if (log.isTraceEnabled()) {
+        log.trace('autoCompleteAgrovoc - Result _startsWith: ');
+        _startsWith.forEach(res => log.trace(res));
+    }
+
+    let _includes = agrovoc.filter(_entity => {
+        if (_count < process.env.SEARCH_MAX_AUTOCOMPLETE) {
+            // Find entities whose label includes the input but that was already selected above
+            if (_entity.entityLabel.includes(input) &&
+                ! _startsWith.some(_s => _s.entityLabel === _entity.entityLabel && _s.entityUri === _entity.entityUri)) {
+                _count++;
+                return true;
+            }
+        } else return false;
+    });
+    if (log.isTraceEnabled()) {
+        log.trace('autoCompleteAgrovoc - Result includes: ');
+        _includes.forEach(res => log.trace(res));
+    }
+
+
+    res.status(200).json(_startsWith.concat(_includes));
 });
 
 module.exports = router;
