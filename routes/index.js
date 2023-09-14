@@ -229,7 +229,7 @@ router.get('/autoCompleteAgrovocSparql/', (req, res) => {
  * @param input: first characters entered by the use
  */
 router.get('/autoCompleteAgrovoc/', (req, res) => {
-    let input = req.query.input;
+    let input = req.query.input.toLowerCase();
 
     // Count the number of entities selected (to return ony a maximum number)
     let _count = 0;
@@ -237,7 +237,7 @@ router.get('/autoCompleteAgrovoc/', (req, res) => {
     // Search for entities whose label starts like the input
     let _startsWith = agrovoc.filter(_entity => {
         if (_count < process.env.SEARCH_MAX_AUTOCOMPLETE) {
-            if (_entity.entityLabel.startsWith(input)) {
+            if (_entity.entityLabel.toLowerCase().startsWith(input)) {
                 _count++;
                 return true;
             }
@@ -250,9 +250,11 @@ router.get('/autoCompleteAgrovoc/', (req, res) => {
 
     let _includes = agrovoc.filter(_entity => {
         if (_count < process.env.SEARCH_MAX_AUTOCOMPLETE) {
-            // Find entities whose label includes the input but that was already selected above
-            if (_entity.entityLabel.includes(input) &&
-                ! _startsWith.some(_s => _s.entityLabel === _entity.entityLabel && _s.entityUri === _entity.entityUri)) {
+            let _entityLabLow = _entity.entityLabel.toLowerCase()
+
+            // Find entities whose label includes the input but that was not already selected above
+            if (_entityLabLow.includes(input) &&
+                ! _startsWith.some(_s => _s.entityLabel.toLowerCase() === _entityLabLow && _s.entityUri === _entity.entityUri)) {
                 _count++;
                 return true;
             }
@@ -262,7 +264,6 @@ router.get('/autoCompleteAgrovoc/', (req, res) => {
         log.trace('autoCompleteAgrovoc - Result includes: ');
         _includes.forEach(res => log.trace(res));
     }
-
 
     res.status(200).json(_startsWith.concat(_includes));
 });
