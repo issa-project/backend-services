@@ -224,6 +224,16 @@ router.get('/autoCompleteAgrovocSparql/', (req, res) => {
 });
 
 
+function sortStrings(a, b) {
+    let aa = a.entityLabel.toLowerCase();
+    let bb = b.entityLabel.toLowerCase();
+    if (aa < bb)
+        return -1;
+    if (aa > bb)
+        return 1;
+    return 0;
+}
+
 /**
  * Complete the user's input using the Agrovoc labels
  * @param input: first characters entered by the use
@@ -242,7 +252,8 @@ router.get('/autoCompleteAgrovoc/', (req, res) => {
                 return true;
             }
         } else return false;
-    });
+    }).sort(sortStrings);
+
     if (log.isTraceEnabled()) {
         log.trace('autoCompleteAgrovoc - Result _startsWith: ');
         _startsWith.forEach(res => log.trace(res));
@@ -259,7 +270,8 @@ router.get('/autoCompleteAgrovoc/', (req, res) => {
                 return true;
             }
         } else return false;
-    });
+    }).sort(sortStrings);
+
     if (log.isTraceEnabled()) {
         log.trace('autoCompleteAgrovoc - Result includes: ');
         _includes.forEach(res => log.trace(res));
