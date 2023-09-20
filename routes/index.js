@@ -11,7 +11,7 @@ let agrovoc = require('../data/dumpAgrovocEntities.json')
 log.info('Starting up backend services');
 
 /**
- * Replace all occurrences if "find" with "replace" in string "template"
+ * Replace all occurrences of "find" with "replace" in string "template"
  * @param template
  * @param find
  * @param replace
@@ -20,6 +20,7 @@ log.info('Starting up backend services');
 function replaceAll(template, find, replace) {
     return template.replace(new RegExp(find, 'g'), replace);
 }
+
 
 /**
  * Read a SPARQL query template and replace the {id} placeholder
@@ -35,11 +36,31 @@ function readTemplate(template, id) {
 
 
 /**
+ * Sort 2 strings in case-insensitive alphabetic order
+ * @param a
+ * @param b
+ * @returns {number}
+ */
+function sortStrings(a, b) {
+    let aa = a.entityLabel.toLowerCase();
+    let bb = b.entityLabel.toLowerCase();
+    if (aa < bb)
+        return -1;
+    if (aa > bb)
+        return 1;
+    return 0;
+}
+
+
+/**
  * Get article metaData (title , date , articleType ... )  without the authors
- * @param uri: URL parameter
+ * @param uri: URI of the document
  */
 router.get('/getArticleMetadata/', (req, res) => {
     let articleUri = req.query.uri;
+    if (log.isInfoEnabled()) {
+        log.info('getArticleMetadata - uri: ' + articleUri);
+    }
     let query = readTemplate("getArticleMetadata.sparql", articleUri);
     if (log.isDebugEnabled()) {
         log.debug('getArticleMetadata - Will submit SPARQL query: \n' + query);
@@ -67,10 +88,13 @@ router.get('/getArticleMetadata/', (req, res) => {
 
 /**
  * GET article authors
- * @param uri: URL parameter
+ * @param uri: URI of the document
  */
 router.get('/getArticleAuthors/', (req, res) => {
     let articleUri = req.query.uri;
+    if (log.isInfoEnabled()) {
+        log.info('getArticleAuthors - uri: ' + articleUri);
+    }
     let query = readTemplate("getArticleAuthors.sparql", articleUri);
     if (log.isDebugEnabled()) {
         log.debug('getArticleAuthors - Will submit SPARQL query: \n' + query);
@@ -98,10 +122,13 @@ router.get('/getArticleAuthors/', (req, res) => {
 
 /**
  * Get named entities
- * @param uri: URL parameter
+ * @param uri: URI of the document
  */
 router.get('/getAbstractNamedEntities/', (req, res) => {
     let articleUri = req.query.uri;
+    if (log.isInfoEnabled()) {
+        log.info('getAbstractNamedEntities - uri: ' + articleUri);
+    }
     articleUri = articleUri + "#abstract";
     let query = readTemplate("getNamedEntities.sparql", articleUri);
     if (log.isDebugEnabled()) {
@@ -131,10 +158,13 @@ router.get('/getAbstractNamedEntities/', (req, res) => {
 
 /**
  * Get the geographical named entities whatever the article part
- * @param uri: URL parameter
+ * @param uri: URI of the document
  */
 router.get('/getGeographicNamedEntities/', (req, res) => {
     let articleUri = req.query.uri;
+    if (log.isInfoEnabled()) {
+        log.info('getGeographicNamedEntities - uri: ' + articleUri);
+    }
     let query = readTemplate("getGeographicNamedEntities.sparql", articleUri);
     if (log.isDebugEnabled()) {
         log.debug('getGeographicNamedEntities - Will submit SPARQL query: \n' + query);
@@ -164,10 +194,13 @@ router.get('/getGeographicNamedEntities/', (req, res) => {
 
 /**
  * Get global descriptors : The global descriptors are concepts characterizing the article as a whole
- * @param uri: URL parameter
+ * @param uri: URI of the document
  */
 router.get('/getArticleDescriptors/', (req, res) => {
     let articleUri = req.query.uri;
+    if (log.isInfoEnabled()) {
+        log.info('getArticleDescriptors - uri: ' + articleUri);
+    }
     let query = readTemplate("getArticleDescriptors.sparql", articleUri);
     if (log.isDebugEnabled()) {
         log.debug('getArticleDescriptors - Will submit SPARQL query: \n' + query);
@@ -196,9 +229,13 @@ router.get('/getArticleDescriptors/', (req, res) => {
 /**
  * Complete the user's input using the Agrovoc labels
  * @param input: first characters entered by the use
+ * @deprecated
  */
 router.get('/autoCompleteAgrovocSparql/', (req, res) => {
     let input = req.query.input;
+    if (log.isInfoEnabled()) {
+        log.info('autoCompleteAgrovocSparql - input: ' + input);
+    }
     let query = readTemplate("autoCompleteAgrovoc.sparql", input);
     if (log.isDebugEnabled()) {
         log.debug('autoCompleteAgrovocSparql - Will submit SPARQL query: \n' + query);
@@ -224,22 +261,15 @@ router.get('/autoCompleteAgrovocSparql/', (req, res) => {
 });
 
 
-function sortStrings(a, b) {
-    let aa = a.entityLabel.toLowerCase();
-    let bb = b.entityLabel.toLowerCase();
-    if (aa < bb)
-        return -1;
-    if (aa > bb)
-        return 1;
-    return 0;
-}
-
 /**
  * Complete the user's input using the Agrovoc labels
  * @param input: first characters entered by the use
  */
 router.get('/autoCompleteAgrovoc/', (req, res) => {
     let input = req.query.input.toLowerCase();
+    if (log.isTraceEnabled()) {
+        log.trace('autoCompleteAgrovoc - input: ' + input);
+    }
 
     // Count the number of entities selected (to return ony a maximum number)
     let _count = 0;
@@ -279,5 +309,62 @@ router.get('/autoCompleteAgrovoc/', (req, res) => {
 
     res.status(200).json(_startsWith.concat(_includes));
 });
+
+
+/**
+ * Search for documents annotated with a set of descriptors given by their URIs
+ * @param uri: URIs of the descriptor to search, passed on the query string either as "uri=a,b,..." or "uri=a&uri=b&..."
+ */
+router.get('/searchDocumentsByDescriptor/', (req, res) => {
+    let uri = req.query.uri;
+    if (log.isInfoEnabled()) {
+        log.info('searchDocumentsByDescriptor - uri: [' + uri + ']');
+    }
+
+    if (uri.length === 0) {
+        if (log.isInfoEnabled()) {
+            log.info('searchDocumentsByDescriptor - no parameter, returning empty response');
+        }
+        res.status(200).json({result:[]});
+
+    // Create the SPARQL triple patterns to match each one of the URIs
+    } else {
+        let uris = uri.split(',');
+        let lineTpl = '    ?document ^oa:hasTarget [ oa:hasBody <{uri}> ].';
+        let lines = '';
+        uris.forEach(_uri => {
+            let line = replaceAll(lineTpl, "{uri}", _uri);
+            lines += line + "\n";
+        })
+
+        // Insert the triple patterns into the SPARQL query
+        let query = readTemplate("searchArticleByDescriptor.sparql", lines);
+        if (log.isDebugEnabled()) {
+            log.debug('searchDocumentsByDescriptor - Will submit SPARQL query: \n' + query);
+        }
+
+        (async () => {
+            let result = [];
+
+            try {
+                result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
+                    if (log.isTraceEnabled()) {
+                        log.trace('searchDocumentsByDescriptor - SPARQL response: ');
+                        data.forEach(res => log.trace(res));
+                    }
+                    return data;
+                }).then(res => res);
+
+            } catch (err) {
+                log.error('searchDocumentsByDescriptor error: ' + err);
+                result = err;
+            }
+            res.status(200).json({result});
+        })()
+    }
+
+
+});
+
 
 module.exports = router;

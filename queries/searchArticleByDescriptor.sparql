@@ -1,0 +1,25 @@
+PREFIX bibo:   <http://purl.org/ontology/bibo/>
+PREFIX dct:    <http://purl.org/dc/terms/>
+PREFIX dce:    <http://purl.org/dc/elements/1.1/>
+PREFIX prov:   <http://www.w3.org/ns/prov#>
+PREFIX schema: <http://schema.org/>
+
+SELECT ?document ?title ?date ?publisher ?lang (group_concat(?author, ", ") as ?authors)
+FROM <http://data-issa.cirad.fr/graph/documents>
+FROM <http://data-issa.cirad.fr/graph/thematic-descriptors>
+FROM <http://data-issa.cirad.fr/graph/annif-descriptors>
+WHERE {
+    # Find documents who are the target of an annotation whose body is a specific URI
+    ?document a prov:Entity.
+
+    # Add here one line for each descriptor, like this:
+    #   ?document ^oa:hasTarget [ oa:hasBody <entityUri> ].
+{id}
+
+    OPTIONAL { ?document dct:title ?title.}
+    OPTIONAL { ?document dce:creator ?author.}
+    OPTIONAL { ?document dct:issued ?date.}
+    OPTIONAL { ?document schema:publication ?publisher.}
+    OPTIONAL { ?document dce:language ?lang.}
+} group by ?document ?title ?date ?publisher ?lang
+limit 200
