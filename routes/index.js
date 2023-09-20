@@ -330,7 +330,7 @@ router.get('/searchDocumentsByDescriptor/', (req, res) => {
     // Create the SPARQL triple patterns to match each one of the URIs
     } else {
         let uris = uri.split(',');
-        let lineTpl = '    ?document ^oa:hasTarget [ oa:hasBody <{uri}> ].';
+        let lineTpl = '    ?uri ^oa:hasTarget [ oa:hasBody <{uri}> ].';
         let lines = '';
         uris.forEach(_uri => {
             let line = replaceAll(lineTpl, "{uri}", _uri);
