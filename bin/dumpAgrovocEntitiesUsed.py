@@ -1,6 +1,9 @@
 """
-This script retrieves the labels and URIs of all the Agrovoc concepts.
-The result is used for the auto-completion of user inputs on the search form.
+This script retrieves the labels and URIs of the Agrovoc concepts that are used
+as descriptors of at least one article in the ISSA dataset.
+The additional field 'count' gives the number of articles that have that concept and label as a descriptor.
+
+The result is used the auto-completion of user inputs on the search form.
 """
 
 import json
@@ -10,37 +13,40 @@ import math
 
 endpoint = "https://data-issa.cirad.fr/sparql"
 limit = 10000
-totalResults = 53000
+totalResults = 18000
 
 prefixes = '''
 prefix skosxl:         <http://www.w3.org/2008/05/skos-xl#>
 '''
 
 query_tpl = prefixes + '''
-SELECT distinct ?entityUri ?entityLabel ?entityPrefLabel
+SELECT distinct ?entityUri ?entityLabel ?entityPrefLabel (count(?document) as ?count)
 FROM NAMED <http://data-issa.cirad.fr/graph/thematic-descriptors>
 FROM NAMED <http://data-issa.cirad.fr/graph/annif-descriptors>
-FROM <http://agrovoc.fao.org/graph>
+FROM NAMED <http://agrovoc.fao.org/graph>
 WHERE {
 
-    { GRAPH <http://data-issa.cirad.fr/graph/thematic-descriptors> {
-        ?descriptor oa:hasBody ?entityUri.
-    }}
-    UNION
-    { GRAPH <http://data-issa.cirad.fr/graph/annif-descriptors> {
-        ?descriptor oa:hasBody ?entityUri.
-    }}
-
-    {
-        ?entityUri skosxl:prefLabel/skosxl:literalForm ?entityLabel.
-        FILTER (langMatches(lang(?entityLabel), "en"))
-    } union {
-        ?entityUri skosxl:altLabel/skosxl:literalForm ?entityLabel;
-            skosxl:prefLabel/skosxl:literalForm ?entityPrefLabel
-        FILTER (langMatches(lang(?entityLabel), "en"))
-        FILTER (langMatches(lang(?entityPrefLabel), "en"))
+  {
+    select distinct ?entityUri ?document
+    FROM <http://data-issa.cirad.fr/graph/thematic-descriptors>
+    FROM <http://data-issa.cirad.fr/graph/annif-descriptors>
+    where {
+      ?descriptor oa:hasBody ?entityUri; oa:hasTarget ?document.
     }
-}
+  }
+
+  { GRAPH <http://agrovoc.fao.org/graph> {
+      {
+          ?entityUri skosxl:prefLabel/skosxl:literalForm ?entityLabel.
+          FILTER (langMatches(lang(?entityLabel), "en"))
+      } union {
+          ?entityUri skosxl:altLabel/skosxl:literalForm ?entityLabel; skosxl:prefLabel/skosxl:literalForm ?entityPrefLabel
+          FILTER (langMatches(lang(?entityLabel), "en"))
+          FILTER (langMatches(lang(?entityPrefLabel), "en"))
+      }
+    }
+  }
+}  group by ?entityUri ?entityLabel ?entityPrefLabel
 offset %(offset)s
 limit %(limit)s
 '''
@@ -72,6 +78,7 @@ if __name__ == '__main__':
                 item['entityLabel'] = row['entityLabel']['value']
                 if 'entityPrefLabel' in row:
                     item['entityPrefLabel'] = row['entityPrefLabel']['value']
+                item['count'] = row['count']['value']
                 output.append(item)
             #print(results_json)
 
