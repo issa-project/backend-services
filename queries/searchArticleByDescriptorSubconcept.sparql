@@ -13,9 +13,7 @@ WHERE {
     # Find documents who are the target of an annotation whose body is a specific URI
     ?document a prov:Entity.
 
-    # Add here one line for each descriptor, like this:
-    #   ?document ^oa:hasTarget [ oa:hasBody <entityUri> ].
-{id}
+{triples}
 
     OPTIONAL { ?document dct:title ?title.}
     OPTIONAL { ?document dce:creator ?author.}

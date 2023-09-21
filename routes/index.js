@@ -10,34 +10,23 @@ let agrovoc = require('../data/dumpAgrovocEntities.json')
 
 log.info('Starting up backend services');
 
-/**
- * Replace all occurrences of "find" with "replace" in string "template"
- * @param template
- * @param find
- * @param replace
- * @returns {*}
- */
-function replaceAll(template, find, replace) {
-    return template.replace(new RegExp(find, 'g'), replace);
-}
-
 
 /**
  * Read a SPARQL query template and replace the {id} placeholder
- * @param template file name
- * @param id value to replace "{id}" with
- * @returns SPARQL query string
+ * @param {string} template file name
+ * @param {number} id value to replace "{id}" with
+ * @returns {string} SPARQL query string
  */
 function readTemplate(template, id) {
     let queryTpl = fs.readFileSync('queries/' + template, 'utf8');
-    return replaceAll(queryTpl, "{id}", id);
+    return queryTpl.replaceAll("{id}", id);
 }
 
 
 /**
  * Sort 2 strings in case-insensitive alphabetic order
- * @param a
- * @param b
+ * @param {string} a
+ * @param {string} b
  * @returns {number}
  */
 function sortStrings(a, b) {
@@ -294,7 +283,7 @@ router.get('/autoCompleteAgrovoc/', (req, res) => {
 
             // Find entities whose label includes the input but that was not already selected above
             if (_entityLabLow.includes(input) &&
-                ! _startsWith.some(_s => _s.entityLabel.toLowerCase() === _entityLabLow && _s.entityUri === _entity.entityUri)) {
+                !_startsWith.some(_s => _s.entityLabel.toLowerCase() === _entityLabLow && _s.entityUri === _entity.entityUri)) {
                 _count++;
                 return true;
             }
@@ -324,20 +313,21 @@ router.get('/searchDocumentsByDescriptor/', (req, res) => {
         if (log.isInfoEnabled()) {
             log.info('searchDocumentsByDescriptor - no parameter, returning empty response');
         }
-        res.status(200).json({result:[]});
+        res.status(200).json({result: []});
 
     } else {
         // Create the SPARQL triple patterns to match each one of the URIs
-        let uris = uri.split(',');
         let lineTpl = '    ?document ^oa:hasTarget [ oa:hasBody <{uri}> ].';
         let lines = '';
+        let uris = uri.split(',');
         uris.forEach(_uri => {
-            let line = replaceAll(lineTpl, "{uri}", _uri);
-            lines += line + "\n";
+            lines += lineTpl.replaceAll("{uri}", _uri) + '\n';
         })
 
         // Insert the triple patterns into the SPARQL query
-        let query = readTemplate("searchArticleByDescriptor.sparql", lines);
+        let queryTpl = fs.readFileSync('queries/searchArticleByDescriptor.sparql', 'utf8');
+        let query = queryTpl.replace("{triples}", lines);
+
         if (log.isDebugEnabled()) {
             log.debug('searchDocumentsByDescriptor - Will submit SPARQL query: \n' + query);
         }
@@ -377,25 +367,20 @@ router.get('/searchDocumentsByDescriptorSubConcept/', (req, res) => {
         if (log.isInfoEnabled()) {
             log.info('searchDocumentsByDescriptorSubConcept - no parameter, returning empty response');
         }
-        res.status(200).json({result:[]});
+        res.status(200).json({result: []});
 
     } else {
         // Create the SPARQL triple patterns to match each one of the URIs or any of their sub-concepts
-        let uris = uri.split(',');
-        let lineTpl = '    ?document ^oa:hasTarget [ oa:hasBody/skos:broader* <{uri}> ].';
-        /* let lineTpl = `
-            ?document ^oa:hasTarget [ oa:hasBody ?body{x} ].
-            ?body{x} skos:broader* <{uri}>; skosxl:prefLabel/skosxl:literalForm ?label{x}.
-            FILTER (langMatches(lang(?label{x}), "en"))
-        `; */
         let lines = '';
+        let lineTpl = '    ?document ^oa:hasTarget [ oa:hasBody/skos:broader* <{uri}> ].';
+        let uris = uri.split(',');
         uris.forEach(_uri => {
-            let line = replaceAll(lineTpl, "{uri}", _uri);
-            lines += line + "\n";
+            lines += lineTpl.replaceAll('{uri}', _uri) + '\n';
         })
 
         // Insert the triple patterns into the SPARQL query
-        let query = readTemplate("searchArticleByDescriptorSubConcept.sparql", lines);
+        let queryTpl = fs.readFileSync('queries/searchArticleByDescriptorSubConcept.sparql', 'utf8');
+        let query = queryTpl.replace("{triples}", lines);
         if (log.isDebugEnabled()) {
             log.debug('searchDocumentsByDescriptorSubConcept - Will submit SPARQL query: \n' + query);
         }
