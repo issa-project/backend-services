@@ -8,6 +8,7 @@ SELECT ?uri ?title ?date ?publisher ?lang ?linkPDF (group_concat(distinct ?autho
 FROM <http://data-issa.cirad.fr/graph/documents>
 FROM <http://data-issa.cirad.fr/graph/thematic-descriptors>
 FROM <http://data-issa.cirad.fr/graph/annif-descriptors>
+FROM <http://agrovoc.fao.org/graph>
 WHERE {
     # Find documents who are the target of an annotation whose body is a specific URI
     ?uri a prov:Entity.
@@ -24,4 +25,4 @@ WHERE {
     OPTIONAL { ?uri schema:downloadUrl ?linkPDF. }
 
 } group by ?uri ?title ?date ?publisher ?lang ?linkPDF
-limit 2000
+limit 4000

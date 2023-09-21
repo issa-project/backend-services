@@ -30,8 +30,7 @@ function replaceAll(template, find, replace) {
  */
 function readTemplate(template, id) {
     let queryTpl = fs.readFileSync('queries/' + template, 'utf8');
-    let query = replaceAll(queryTpl, "{id}", id);
-    return query;
+    return replaceAll(queryTpl, "{id}", id);
 }
 
 
@@ -327,8 +326,8 @@ router.get('/searchDocumentsByDescriptor/', (req, res) => {
         }
         res.status(200).json({result:[]});
 
-    // Create the SPARQL triple patterns to match each one of the URIs
     } else {
+        // Create the SPARQL triple patterns to match each one of the URIs
         let uris = uri.split(',');
         let lineTpl = '    ?uri ^oa:hasTarget [ oa:hasBody <{uri}> ].';
         let lines = '';
@@ -345,7 +344,6 @@ router.get('/searchDocumentsByDescriptor/', (req, res) => {
 
         (async () => {
             let result = [];
-
             try {
                 result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
                     if (log.isTraceEnabled()) {
@@ -362,9 +360,59 @@ router.get('/searchDocumentsByDescriptor/', (req, res) => {
             res.status(200).json({result});
         })()
     }
-
-
 });
 
+
+/**
+ * Search for documents annotated with a set of descriptors given by their URIs
+ * @param uri: URIs of the descriptor to search, passed on the query string either as "uri=a,b,..." or "uri=a&uri=b&..."
+ */
+router.get('/searchDocumentsByDescriptorSubConcept/', (req, res) => {
+    let uri = req.query.uri;
+    if (log.isInfoEnabled()) {
+        log.info('searchDocumentsByDescriptorSubConcept - uri: [' + uri + ']');
+    }
+
+    if (uri.length === 0) {
+        if (log.isInfoEnabled()) {
+            log.info('searchDocumentsByDescriptorSubConcept - no parameter, returning empty response');
+        }
+        res.status(200).json({result:[]});
+
+    } else {
+        // Create the SPARQL triple patterns to match each one of the URIs or any of their sub-concepts
+        let uris = uri.split(',');
+        let lineTpl = '    ?uri ^oa:hasTarget [ oa:hasBody/skos:broader* <{uri}> ].';
+        let lines = '';
+        uris.forEach(_uri => {
+            let line = replaceAll(lineTpl, "{uri}", _uri);
+            lines += line + "\n";
+        })
+
+        // Insert the triple patterns into the SPARQL query
+        let query = readTemplate("searchArticleByDescriptorSubConcept.sparql", lines);
+        if (log.isDebugEnabled()) {
+            log.debug('searchDocumentsByDescriptorSubConcept - Will submit SPARQL query: \n' + query);
+        }
+
+        (async () => {
+            let result = [];
+            try {
+                result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
+                    if (log.isTraceEnabled()) {
+                        log.trace('searchDocumentsByDescriptorSubConcept - SPARQL response: ');
+                        data.forEach(res => log.trace(res));
+                    }
+                    return data;
+                }).then(res => res);
+
+            } catch (err) {
+                log.error('searchDocumentsByDescriptorSubConcept error: ' + err);
+                result = err;
+            }
+            res.status(200).json({result});
+        })()
+    }
+});
 
 module.exports = router;
