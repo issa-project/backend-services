@@ -336,6 +336,9 @@ router.get('/searchDocumentsByDescriptor/', (req, res) => {
             let result = [];
             try {
                 result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
+                    if (log.isInfoEnabled()) {
+                        log.info('searchDocumentsByDescriptor returned ' + data.length + ' results');
+                    }
                     if (log.isTraceEnabled()) {
                         log.trace('searchDocumentsByDescriptor - SPARQL response: ');
                         data.forEach(res => log.trace(res));
@@ -372,14 +375,14 @@ router.get('/searchDocumentsByDescriptorSubConcept/', (req, res) => {
     } else {
         // Create the SPARQL triple patterns to match each one of the URIs or any of their sub-concepts
         let lines = '';
-        let lineTpl = '    ?document ^oa:hasTarget [ oa:hasBody/skos:broader* <{uri}> ].';
+        let lineTpl = `    ?document ^oa:hasTarget [ oa:hasBody/(skos:broader|^agron:includes)* <{uri}> ].`;
         let uris = uri.split(',');
         uris.forEach(_uri => {
             lines += lineTpl.replaceAll('{uri}', _uri) + '\n';
         })
 
         // Insert the triple patterns into the SPARQL query
-        let queryTpl = fs.readFileSync('queries/searchArticleByDescriptorSubConcept.sparql', 'utf8');
+        let queryTpl = fs.readFileSync('queries/searchArticleByDescriptorExtended.sparql', 'utf8');
         let query = queryTpl.replace("{triples}", lines);
         if (log.isDebugEnabled()) {
             log.debug('searchDocumentsByDescriptorSubConcept - Will submit SPARQL query: \n' + query);
@@ -389,8 +392,66 @@ router.get('/searchDocumentsByDescriptorSubConcept/', (req, res) => {
             let result = [];
             try {
                 result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
+                    if (log.isInfoEnabled()) {
+                        log.info('searchDocumentsByDescriptorSubConcept returned ' + data.length + ' results');
+                    }
                     if (log.isTraceEnabled()) {
                         log.trace('searchDocumentsByDescriptorSubConcept - SPARQL response: ');
+                        data.forEach(res => log.trace(res));
+                    }
+                    return data;
+                }).then(res => res);
+
+            } catch (err) {
+                log.error('searchDocumentsByDescriptorSubConcept error: ' + err);
+                result = err;
+            }
+            res.status(200).json({result});
+        })()
+    }
+});
+
+/**
+ * Search for documents annotated with a set of descriptors given by their URIs
+ * @param uri: URIs of the descriptor to search, passed on the query string either as "uri=a,b,..." or "uri=a&uri=b&..."
+ */
+router.get('/searchDocumentsByDescriptorRelated/', (req, res) => {
+    let uri = req.query.uri;
+    if (log.isInfoEnabled()) {
+        log.info('searchDocumentsByDescriptorRelated - uri: [' + uri + ']');
+    }
+
+    if (uri.length === 0) {
+        if (log.isInfoEnabled()) {
+            log.info('searchDocumentsByDescriptorRelated - no parameter, returning empty response');
+        }
+        res.status(200).json({result: []});
+
+    } else {
+        // Create the SPARQL triple patterns to match each one of the URIs or any of their sub-concepts
+        let lines = '';
+        let lineTpl = '    ?document ^oa:hasTarget [ oa:hasBody/skos:broader*/skos:related <{uri}> ].';
+        let uris = uri.split(',');
+        uris.forEach(_uri => {
+            lines += lineTpl.replaceAll('{uri}', _uri) + '\n';
+        })
+
+        // Insert the triple patterns into the SPARQL query
+        let queryTpl = fs.readFileSync('queries/searchArticleByDescriptorExtended.sparql', 'utf8');
+        let query = queryTpl.replace("{triples}", lines);
+        if (log.isDebugEnabled()) {
+            log.debug('searchDocumentsByDescriptorRelated - Will submit SPARQL query: \n' + query);
+        }
+
+        (async () => {
+            let result = [];
+            try {
+                result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
+                    if (log.isInfoEnabled()) {
+                        log.info('searchDocumentsByDescriptorRelated returned ' + data.length + ' results');
+                    }
+                    if (log.isTraceEnabled()) {
+                        log.trace('searchDocumentsByDescriptorRelated - SPARQL response: ');
                         data.forEach(res => log.trace(res));
                     }
                     return data;
