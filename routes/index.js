@@ -329,7 +329,7 @@ router.get('/searchDocumentsByDescriptor/', (req, res) => {
     } else {
         // Create the SPARQL triple patterns to match each one of the URIs
         let uris = uri.split(',');
-        let lineTpl = '    ?uri ^oa:hasTarget [ oa:hasBody <{uri}> ].';
+        let lineTpl = '    ?document ^oa:hasTarget [ oa:hasBody <{uri}> ].';
         let lines = '';
         uris.forEach(_uri => {
             let line = replaceAll(lineTpl, "{uri}", _uri);
@@ -382,7 +382,12 @@ router.get('/searchDocumentsByDescriptorSubConcept/', (req, res) => {
     } else {
         // Create the SPARQL triple patterns to match each one of the URIs or any of their sub-concepts
         let uris = uri.split(',');
-        let lineTpl = '    ?uri ^oa:hasTarget [ oa:hasBody/skos:broader* <{uri}> ].';
+        let lineTpl = '    ?document ^oa:hasTarget [ oa:hasBody/skos:broader* <{uri}> ].';
+        /* let lineTpl = `
+            ?document ^oa:hasTarget [ oa:hasBody ?body{x} ].
+            ?body{x} skos:broader* <{uri}>; skosxl:prefLabel/skosxl:literalForm ?label{x}.
+            FILTER (langMatches(lang(?label{x}), "en"))
+        `; */
         let lines = '';
         uris.forEach(_uri => {
             let line = replaceAll(lineTpl, "{uri}", _uri);
