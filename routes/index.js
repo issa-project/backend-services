@@ -215,42 +215,15 @@ router.get('/getArticleDescriptors/', (req, res) => {
 
 
 /**
- * Complete the user's input using the Agrovoc labels
- * @param input: first characters entered by the use
- * @deprecated
- */
-router.get('/autoCompleteAgrovocSparql/', (req, res) => {
-    let input = req.query.input;
-    if (log.isInfoEnabled()) {
-        log.info('autoCompleteAgrovocSparql - input: ' + input);
-    }
-    let query = readTemplate("autoCompleteAgrovoc.sparql", input);
-    if (log.isDebugEnabled()) {
-        log.debug('autoCompleteAgrovocSparql - Will submit SPARQL query: \n' + query);
-    }
-
-    (async () => {
-        let result;
-        try {
-            result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
-                if (log.isTraceEnabled()) {
-                    log.trace('autoCompleteAgrovocSparql - SPARQL response: ');
-                    data.forEach(res => log.trace(res));
-                }
-                return data;
-            }).then(res => res);
-
-        } catch (err) {
-            log.error('autoCompleteAgrovocSparql error: ' + err);
-            result = err;
-        }
-        res.status(200).json({result});
-    })()
-});
-
-
-/**
- * Complete the user's input using the Agrovoc labels
+ * Complete the user's input using the Agrovoc labels.
+ * The output is a JSON array whose documents are shaped as in the example below:
+ *     {
+ *         "entityUri": "http://aims.fao.org/aos/agrovoc/c_4459",
+ *         "entityLabel": "Luffa cylindrica",
+ *         "entityPrefLabel": "Luffa aegyptica",
+ *         "count": "1"
+ *     }
+ *  Count is the number of documents in the knowledge base that are assigned the descriptor with this URI/label.
  * @param input: first characters entered by the use
  */
 router.get('/autoCompleteAgrovoc/', (req, res) => {
