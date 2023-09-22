@@ -14,7 +14,7 @@ FROM <http://agrovoc.fao.org/graph>
 WHERE {
     ?document a prov:Entity.
 
-{triples}
+    ?document ^oa:hasTarget [ oa:hasBody/(skos:broader|^agron:includes)* <{id}> ].
 
     OPTIONAL { ?document dct:title ?title.}
     OPTIONAL { ?document dce:creator ?author.}

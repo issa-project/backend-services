@@ -46,9 +46,7 @@ function sortStrings(a, b) {
  */
 router.get('/getArticleMetadata/', (req, res) => {
     let articleUri = req.query.uri;
-    if (log.isInfoEnabled()) {
-        log.info('getArticleMetadata - uri: ' + articleUri);
-    }
+    log.info('getArticleMetadata - uri: ' + articleUri);
     let query = readTemplate("getArticleMetadata.sparql", articleUri);
     if (log.isDebugEnabled()) {
         log.debug('getArticleMetadata - Will submit SPARQL query: \n' + query);
@@ -80,9 +78,7 @@ router.get('/getArticleMetadata/', (req, res) => {
  */
 router.get('/getArticleAuthors/', (req, res) => {
     let articleUri = req.query.uri;
-    if (log.isInfoEnabled()) {
-        log.info('getArticleAuthors - uri: ' + articleUri);
-    }
+    log.info('getArticleAuthors - uri: ' + articleUri);
     let query = readTemplate("getArticleAuthors.sparql", articleUri);
     if (log.isDebugEnabled()) {
         log.debug('getArticleAuthors - Will submit SPARQL query: \n' + query);
@@ -114,9 +110,7 @@ router.get('/getArticleAuthors/', (req, res) => {
  */
 router.get('/getAbstractNamedEntities/', (req, res) => {
     let articleUri = req.query.uri;
-    if (log.isInfoEnabled()) {
-        log.info('getAbstractNamedEntities - uri: ' + articleUri);
-    }
+    log.info('getAbstractNamedEntities - uri: ' + articleUri);
     articleUri = articleUri + "#abstract";
     let query = readTemplate("getNamedEntities.sparql", articleUri);
     if (log.isDebugEnabled()) {
@@ -150,9 +144,7 @@ router.get('/getAbstractNamedEntities/', (req, res) => {
  */
 router.get('/getGeographicNamedEntities/', (req, res) => {
     let articleUri = req.query.uri;
-    if (log.isInfoEnabled()) {
-        log.info('getGeographicNamedEntities - uri: ' + articleUri);
-    }
+    log.info('getGeographicNamedEntities - uri: ' + articleUri);
     let query = readTemplate("getGeographicNamedEntities.sparql", articleUri);
     if (log.isDebugEnabled()) {
         log.debug('getGeographicNamedEntities - Will submit SPARQL query: \n' + query);
@@ -186,9 +178,7 @@ router.get('/getGeographicNamedEntities/', (req, res) => {
  */
 router.get('/getArticleDescriptors/', (req, res) => {
     let articleUri = req.query.uri;
-    if (log.isInfoEnabled()) {
-        log.info('getArticleDescriptors - uri: ' + articleUri);
-    }
+    log.info('getArticleDescriptors - uri: ' + articleUri);
     let query = readTemplate("getArticleDescriptors.sparql", articleUri);
     if (log.isDebugEnabled()) {
         log.debug('getArticleDescriptors - Will submit SPARQL query: \n' + query);
@@ -278,14 +268,10 @@ router.get('/autoCompleteAgrovoc/', (req, res) => {
  */
 router.get('/searchDocumentsByDescriptor/', (req, res) => {
     let uri = req.query.uri;
-    if (log.isInfoEnabled()) {
-        log.info('searchDocumentsByDescriptor - uri: [' + uri + ']');
-    }
+    log.info('searchDocumentsByDescriptor - uri: [' + uri + ']');
 
     if (uri.length === 0) {
-        if (log.isInfoEnabled()) {
-            log.info('searchDocumentsByDescriptor - no parameter, returning empty response');
-        }
+        log.info('searchDocumentsByDescriptor - no parameter, returning empty response');
         res.status(200).json({result: []});
 
     } else {
@@ -309,9 +295,7 @@ router.get('/searchDocumentsByDescriptor/', (req, res) => {
             let result = [];
             try {
                 result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
-                    if (log.isInfoEnabled()) {
-                        log.info('searchDocumentsByDescriptor returned ' + data.length + ' results');
-                    }
+                    log.info('searchDocumentsByDescriptor returned ' + data.length + ' results');
                     if (log.isTraceEnabled()) {
                         log.trace('searchDocumentsByDescriptor - SPARQL response: ');
                         data.forEach(res => log.trace(res));
@@ -335,52 +319,54 @@ router.get('/searchDocumentsByDescriptor/', (req, res) => {
  */
 router.get('/searchDocumentsByDescriptorSubConcept/', (req, res) => {
     let uri = req.query.uri;
-    if (log.isInfoEnabled()) {
-        log.info('searchDocumentsByDescriptorSubConcept - uri: [' + uri + ']');
-    }
+    log.info('searchDocumentsByDescriptorSubConcept - uri: [' + uri + ']');
 
     if (uri.length === 0) {
-        if (log.isInfoEnabled()) {
-            log.info('searchDocumentsByDescriptorSubConcept - no parameter, returning empty response');
-        }
+        log.info('searchDocumentsByDescriptorSubConcept - no parameter, returning empty response');
         res.status(200).json({result: []});
 
     } else {
-        // Create the SPARQL triple patterns to match each one of the URIs or any of their sub-concepts
-        let lines = '';
-        let lineTpl = `    ?document ^oa:hasTarget [ oa:hasBody/(skos:broader|^agron:includes)* <{uri}> ].`;
+        // Submit one SPARQL query for each URI
         let uris = uri.split(',');
+        let promises = [];
         uris.forEach(_uri => {
-            lines += lineTpl.replaceAll('{uri}', _uri) + '\n';
+            // Insert the triple patterns into the SPARQL query
+            let query = readTemplate("searchArticleByDescriptorSubConcept.sparql", _uri);
+            if (log.isDebugEnabled()) {
+                log.debug('searchDocumentsByDescriptorSubConcept - Will submit SPARQL query: \n' + query);
+            }
+
+            // Submit the SPARQL query and save the promise
+            let _promise = (async () => {
+                let _result = [];
+                try {
+                    _result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
+                        log.info('searchDocumentsByDescriptorSubConcept: query for uri ' + _uri + ' returned ' + data.length + ' results');
+                        return data;
+                    }).then(res => res);
+                } catch (err) {
+                    log.error('searchDocumentsByDescriptorSubConcept error: ' + err);
+                    _result = err;
+                }
+                return _result;
+            })();
+            promises.push(_promise);
         })
 
-        // Insert the triple patterns into the SPARQL query
-        let queryTpl = fs.readFileSync('queries/searchArticleByDescriptorExtended.sparql', 'utf8');
-        let query = queryTpl.replace("{triples}", lines);
-        if (log.isDebugEnabled()) {
-            log.debug('searchDocumentsByDescriptorSubConcept - Will submit SPARQL query: \n' + query);
-        }
-
-        (async () => {
-            let result = [];
-            try {
-                result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
-                    if (log.isInfoEnabled()) {
-                        log.info('searchDocumentsByDescriptorSubConcept returned ' + data.length + ' results');
-                    }
-                    if (log.isTraceEnabled()) {
-                        log.trace('searchDocumentsByDescriptorSubConcept - SPARQL response: ');
-                        data.forEach(res => log.trace(res));
-                    }
-                    return data;
-                }).then(res => res);
-
-            } catch (err) {
-                log.error('searchDocumentsByDescriptorSubConcept error: ' + err);
-                result = err;
-            }
-            res.status(200).json({result});
-        })()
+        // Wait for all the responses and do the intersection of all of them
+        let joinedResults = [];
+        Promise.allSettled(promises).then((_promises) => {
+            _promises.forEach((_promise, index) => {
+                if (index === 0) {
+                    joinedResults = _promise.value;
+                } else {
+                    joinedResults = joinedResults.filter(_r => _promise.value.some(_n => _n.document === _r.document));
+                }
+                log.info("searchDocumentsByDescriptorSubConcept: current number of results : " + joinedResults.length);
+            });
+            log.info("searchDocumentsByDescriptorSubConcept: returning : " + joinedResults.length + " results");
+            res.status(200).json({"result": joinedResults});
+        });
     }
 });
 
@@ -401,42 +387,49 @@ router.get('/searchDocumentsByDescriptorRelated/', (req, res) => {
         res.status(200).json({result: []});
 
     } else {
-        // Create the SPARQL triple patterns to match each one of the URIs or any of their sub-concepts
-        let lines = '';
-        let lineTpl = '    ?document ^oa:hasTarget [ oa:hasBody/skos:broader*/skos:related <{uri}> ].';
+        // Submit one SPARQL query for each URI
         let uris = uri.split(',');
+        let promises = [];
         uris.forEach(_uri => {
-            lines += lineTpl.replaceAll('{uri}', _uri) + '\n';
+            // Insert the triple patterns into the SPARQL query
+            let query = readTemplate("searchArticleByDescriptorRelated.sparql", _uri);
+            if (log.isDebugEnabled()) {
+                log.debug('searchDocumentsByDescriptorRelated - Will submit SPARQL query: \n' + query);
+            }
+
+            // Submit the SPARQL query and save the promise
+            let _promise = (async () => {
+                let _result = [];
+                try {
+                    _result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
+                        log.info('searchDocumentsByDescriptorRelated: query for uri ' + _uri + ' returned ' + data.length + ' results');
+                        return data;
+                    }).then(res => res);
+                } catch (err) {
+                    log.error('searchDocumentsByDescriptorRelated error: ' + err);
+                    _result = err;
+                }
+                return _result;
+            })();
+            promises.push(_promise);
         })
 
-        // Insert the triple patterns into the SPARQL query
-        let queryTpl = fs.readFileSync('queries/searchArticleByDescriptorExtended.sparql', 'utf8');
-        let query = queryTpl.replace("{triples}", lines);
-        if (log.isDebugEnabled()) {
-            log.debug('searchDocumentsByDescriptorRelated - Will submit SPARQL query: \n' + query);
-        }
-
-        (async () => {
-            let result = [];
-            try {
-                result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
-                    if (log.isInfoEnabled()) {
-                        log.info('searchDocumentsByDescriptorRelated returned ' + data.length + ' results');
-                    }
-                    if (log.isTraceEnabled()) {
-                        log.trace('searchDocumentsByDescriptorRelated - SPARQL response: ');
-                        data.forEach(res => log.trace(res));
-                    }
-                    return data;
-                }).then(res => res);
-
-            } catch (err) {
-                log.error('searchDocumentsByDescriptorSubConcept error: ' + err);
-                result = err;
-            }
-            res.status(200).json({result});
-        })()
+        // Wait for all the responses and do the intersection of all of them
+        let joinedResults = [];
+        Promise.allSettled(promises).then((_promises) => {
+            _promises.forEach((_promise, index) => {
+                if (index === 0) {
+                    joinedResults = _promise.value;
+                } else {
+                    joinedResults = joinedResults.filter(_r => _promise.value.some(_n => _n.document === _r.document));
+                }
+                log.info("searchDocumentsByDescriptorRelated: current number of results : " + joinedResults.length);
+            });
+            log.info("searchDocumentsByDescriptorRelated: returning : " + joinedResults.length + " results");
+            res.status(200).json({"result": joinedResults});
+        });
     }
 });
+
 
 module.exports = router;

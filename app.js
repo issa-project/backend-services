@@ -1,13 +1,13 @@
-var express = require('express');
-var createError = require('http-errors');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('./modules/logger');
-var indexRouter = require('./routes/index');
+let express = require('express');
+let createError = require('http-errors');
+let path = require('path');
+let cookieParser = require('cookie-parser');
+let logger = require('./modules/logger');
+let indexRouter = require('./routes/index');
 
-var app = express();
+let app = express();
 
-var allowCrossDomain = function (req, res, next) {
+let allowCrossDomain = function (req, res, next) {
     res.header('Access-Control-Allow-Origin', "*");
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
     res.header('Access-Control-Allow-Headers', 'Content-Type');
