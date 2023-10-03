@@ -1,12 +1,16 @@
+PREFIX agron:  <http://aims.fao.org/aos/agrontology#>
 PREFIX bibo:   <http://purl.org/ontology/bibo/>
 PREFIX dct:    <http://purl.org/dc/terms/>
 PREFIX dce:    <http://purl.org/dc/elements/1.1/>
 PREFIX oa:     <http://www.w3.org/ns/oa#>
 PREFIX prov:   <http://www.w3.org/ns/prov#>
 PREFIX schema: <http://schema.org/>
-PREFIX agron:  <http://aims.fao.org/aos/agrontology#>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 
-SELECT ?document ?title ?date ?publisher ?lang ?linkPDF (group_concat(distinct ?author, "$") as ?authors)
+# This query retrieves the documents that are annotated with Agrovoc concept {id} or any of its sub-concepts.
+# It keeps track of the actual concepts matched (concatenated in ?matchedEntities), these may contain either {id} itself of its sub-concepts.
+
+SELECT ?document ?title ?date ?publisher ?lang ?linkPDF (group_concat(distinct ?author, "$") as ?authors) (group_concat(distinct ?matchedEntity, "$$") as ?matchedEntities)
 FROM <http://data-issa.cirad.fr/graph/documents>
 FROM <http://data-issa.cirad.fr/graph/thematic-descriptors>
 FROM <http://data-issa.cirad.fr/graph/annif-descriptors>
@@ -14,7 +18,19 @@ FROM <http://agrovoc.fao.org/graph>
 WHERE {
     ?document a prov:Entity.
 
-    ?document ^oa:hasTarget [ oa:hasBody/(skos:broader|^agron:includes)* <{id}> ].
+    {   ?document ^oa:hasTarget [ oa:hasBody <{id}> ].
+        <{id}>
+            skosxl:prefLabel/skosxl:literalForm ?entityLabel.
+        FILTER langMatches(lang(?entityLabel), "en")
+        BIND(concat("{id}", '$', ?entityLabel) as ?matchedEntity)
+    } UNION {
+        ?document ^oa:hasTarget [ oa:hasBody ?entityUri ].
+        ?entityUri
+            (skos:broader|^agron:includes)+ <{id}>;
+            skosxl:prefLabel/skosxl:literalForm ?entityLabel.
+        FILTER langMatches(lang(?entityLabel), "en")
+        BIND(concat(?entityUri, '$', ?entityLabel) as ?matchedEntity)
+    }
 
     OPTIONAL { ?document dct:title ?title.}
     OPTIONAL { ?document dce:creator ?author.}
@@ -24,4 +40,4 @@ WHERE {
     OPTIONAL { ?document schema:downloadUrl ?linkPDF. }
 
 } group by ?document ?title ?date ?publisher ?lang ?linkPDF
-limit 4000
+limit 20000
