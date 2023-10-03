@@ -25,4 +25,4 @@ WHERE {
     OPTIONAL { ?document schema:downloadUrl ?linkPDF. }
 
 } group by ?document ?title ?date ?publisher ?lang ?linkPDF
-limit 2000
+limit 20000
