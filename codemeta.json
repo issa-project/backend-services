@@ -6,7 +6,7 @@
   "datePublished": "2022-05-01",
   "dateModified": "2023-10-04",
   "issueTracker": "https://github.com/issa-project/web-backend/issues",
-  "name": "ISSA Web Backend",
+  "name": "ISSA Web Application Backend Services",
   "version": "1.1",
   "description": "The ISSA project (https://issa.cirad.fr/) focuses on the semantic indexing of scientific publications in an open archive. This project is the backend part of a web application that demonstrates the interest and use of such a semantic index for researchers and librarians. It provides a set of Web APIs (services) used by the frontend application.",
   "funding": "ISSA project",
