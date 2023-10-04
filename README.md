@@ -10,7 +10,7 @@ It provides a set of Web APIs (services) used by the frontend application  avail
 
 The services exposed by the server are defined in [routes/index.js](routes/index.js).
 
-With the exception of service `autoCompleteAgrovoc`, the services submit SPARQL SELECT queries [queries](queries) to the ISSA SPARQL endpoint (property SEMANTIC_INDEX_SPARQL_ENDPOINT in [.env](.env))
+With the exception of service `autoCompleteAgrovoc`, the services submit SPARQL SELECT [queries](queries) to the ISSA SPARQL endpoint (property SEMANTIC_INDEX_SPARQL_ENDPOINT in [.env](.env))
 using the d3-sparql library.
 The response of the services is the output of the d3-sparql library itself, that only returns the "results.bindings" part
 of the SPARQL response in JSON format, following this format:
