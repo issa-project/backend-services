@@ -15,6 +15,7 @@ WHERE {
     OPTIONAL { <{id}> dct:issued ?date.}
     OPTIONAL { <{id}> schema:publication ?pub.}
     OPTIONAL { <{id}> dct:license ?license.}
+    OPTIONAL { <{id}> dct:rights ?rights.}
     OPTIONAL { <{id}> bibo:doi ?doi.}
     OPTIONAL { <{id}> bibo:pmid ?pmid.}
     OPTIONAL { <{id}> fabio:hasPubMedId ?hasPubMedId.}
