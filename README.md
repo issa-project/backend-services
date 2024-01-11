@@ -30,15 +30,11 @@ of the SPARQL response in JSON format, following this format:
 Therefore, the SELECT clause of the SPARQL queries are the de facto documentation of the services 
 since they give the names of the variables (var1 and var2 in the example above).
 
-
-## Installation
+## Standalone deployment
 
 Pre-requisite: [node.js](https://nodejs.org/) 17, yarn.
 
 Install the dependencies with `yarn install`.
-
-
-## Run
 
 Run the application: ` yarn start`
 
@@ -47,8 +43,29 @@ By default, the node.js server listens on port 3000. This can be changed in file
 Make sure the server is properly started by pointing your browser to:
 ```
 http://localhost:3000/getArticleMetadata?uri=http://data-issa.cirad.fr/document/592919
+http://localhost:3000/getArticleAuthors/?uri=http://data-issa.cirad.fr/document/592919
+http://localhost:3000/getAbstractNamedEntities/?uri=http://data-issa.cirad.fr/document/592919
+http://localhost:3000/getGeographicNamedEntities/?uri=http://data-issa.cirad.fr/document/592919
+http://localhost:3000/autoComplete/?input=carbon
+http://localhost:3000/searchDocumentsByDescriptor/?uri=http://aims.fao.org/aos/agrovoc/c_3055
+http://localhost:3000/searchDocumentsByDescriptorSubConcept/?uri=http://aims.fao.org/aos/agrovoc/c_3055
+http://localhost:3000/searchDocumentsByDescriptorRelated/?uri=http://aims.fao.org/aos/agrovoc/c_3055
 ```
-(this is an example article URI that may no longer be valid at some point).
+
+
+### Docker deployment
+
+The repository comes with a Dockerfile and a docker-compose file.
+After cloning, build the application with this command:
+
+```
+docker-compose build
+```
+
+Then start the services with:
+```
+docker-compose up -d
+```
 
 
 ### Logging

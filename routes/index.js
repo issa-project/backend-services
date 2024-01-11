@@ -249,7 +249,7 @@ router.get('/getArticleDescriptors/', (req, res) => {
  * entityPrefLabel is optional, it gives the preferred label in case entityLabel is not the preferred label.
  * "Count" is the number of documents in the knowledge base that are assigned the descriptor with this URI/label.
  */
-router.get('/autoCompleteAgrovoc/', (req, res) => {
+router.get('/autoComplete/', (req, res) => {
     let input = req.query.input.toLowerCase();
     if (log.isDebugEnabled()) {
         log.debug('autoCompleteAgrovoc - input: ' + input);
@@ -556,7 +556,8 @@ router.get('/searchDocumentsByDescriptorRelated/', (req, res) => {
                     });
                 } else {
                     // Remove, from the current intersection, the documents that are not mentioned in the results of the current promise
-                    joinedResults = joinedResults.filter(_r => _promise.value.some(_n => _n.document === _r.document));
+                    log.debug(_promise.value);
+                    joinedResults = joinedResults.filter(_r => _promise.value.some(_n => _n.document === _r.document) );
 
                     // Join the matched entities of each result in the current intersection with
                     // the matched entities of the corresponding result of the current promise

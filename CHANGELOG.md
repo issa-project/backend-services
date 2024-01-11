@@ -1,6 +1,6 @@
-# ISSA Visualization front-end application
+## [CURRENT]
 
-## [CURRENT] 
+- Renamed service autoCompleteAgrovoc to autoComplete
 
 ## [1.1] 2023-10-04
 
