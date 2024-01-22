@@ -16,6 +16,12 @@ FROM <http://data-issa.cirad.fr/graph/annif-descriptors>
 FROM <http://agrovoc.fao.org/graph>
 WHERE {
     ?document a prov:Entity.
+    OPTIONAL { ?document dct:title ?title.}
+    OPTIONAL { ?document dce:creator ?author.}
+    OPTIONAL { ?document dct:issued ?date.}
+    OPTIONAL { ?document schema:publication ?publisher.}
+    OPTIONAL { ?document dce:language ?lang.}
+    OPTIONAL { ?document schema:downloadUrl ?linkPDF. }
 
     {   ?document ^oa:hasTarget [ oa:hasBody <{id}> ].
         <{id}>
@@ -30,13 +36,6 @@ WHERE {
         FILTER langMatches(lang(?entityLabel), "en")
         BIND(concat(?entityUri, '$', ?entityLabel) as ?matchedEntity)
     }
-
-    OPTIONAL { ?document dct:title ?title.}
-    OPTIONAL { ?document dce:creator ?author.}
-    OPTIONAL { ?document dct:issued ?date.}
-    OPTIONAL { ?document schema:publication ?publisher.}
-    OPTIONAL { ?document dce:language ?lang.}
-    OPTIONAL { ?document schema:downloadUrl ?linkPDF. }
 
 } group by ?document ?title ?date ?publisher ?lang ?linkPDF
 limit 20000

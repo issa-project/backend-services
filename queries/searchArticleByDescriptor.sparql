@@ -12,17 +12,16 @@ FROM <http://data-issa.cirad.fr/graph/annif-descriptors>
 WHERE {
     # Find documents who are the target of an annotation whose body is a specific URI
     ?document a prov:Entity.
-
-    # Add here one line for each descriptor, like this:
-    #   ?document ^oa:hasTarget [ oa:hasBody <entityUri> ].
-{triples}
-
     OPTIONAL { ?document dct:title ?title.}
     OPTIONAL { ?document dce:creator ?author.}
     OPTIONAL { ?document dct:issued ?date.}
     OPTIONAL { ?document schema:publication ?publisher.}
     OPTIONAL { ?document dce:language ?lang.}
     OPTIONAL { ?document schema:downloadUrl ?linkPDF. }
+
+    # Add here one line for each descriptor, like this:
+    #   ?document ^oa:hasTarget [ oa:hasBody <entityUri> ].
+{triples}
 
 } group by ?document ?title ?date ?publisher ?lang ?linkPDF
 limit 20000

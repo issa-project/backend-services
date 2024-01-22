@@ -1,12 +1,15 @@
 let express = require('express');
 let fs = require('fs');
+let path = require('path');
 let logger = require("../modules/logger");
 let d3 = require('d3-sparql');
 require('dotenv').config();
 
 let log = logger.application;
 let router = express.Router();
-let agrovoc = require('../data/dumpAgrovocEntities.json')
+
+// Load the named entities labels for auto-complete
+let autoCompleteEntities = require('../data/dumpAgrovocEntities.json')
 
 log.info('Starting up backend services');
 
@@ -252,14 +255,14 @@ router.get('/getArticleDescriptors/', (req, res) => {
 router.get('/autoComplete/', (req, res) => {
     let input = req.query.input.toLowerCase();
     if (log.isDebugEnabled()) {
-        log.debug('autoCompleteAgrovoc - input: ' + input);
+        log.debug('autoComplete - input: ' + input);
     }
 
     // Count the number of entities selected (to return ony a maximum number)
     let _count = 0;
 
     // Search for entities whose label starts like the input
-    let _startsWith = agrovoc.filter(_entity => {
+    let _startsWith = autoCompleteEntities.filter(_entity => {
         if (_count < process.env.SEARCH_MAX_AUTOCOMPLETE) {
             if (_entity.entityLabel.toLowerCase().startsWith(input)) {
                 _count++;
@@ -269,11 +272,11 @@ router.get('/autoComplete/', (req, res) => {
     }).sort(sortStrings);
 
     if (log.isTraceEnabled()) {
-        log.trace('autoCompleteAgrovoc - Result _startsWith: ');
+        log.trace('autoComplete - Result _startsWith: ');
         _startsWith.forEach(res => log.trace(res));
     }
 
-    let _includes = agrovoc.filter(_entity => {
+    let _includes = autoCompleteEntities.filter(_entity => {
         if (_count < process.env.SEARCH_MAX_AUTOCOMPLETE) {
             let _entityLabLow = _entity.entityLabel.toLowerCase()
 
@@ -287,7 +290,7 @@ router.get('/autoComplete/', (req, res) => {
     }).sort(sortStrings);
 
     if (log.isTraceEnabled()) {
-        log.trace('autoCompleteAgrovoc - Result includes: ');
+        log.trace('autoComplete - Result includes: ');
         _includes.forEach(res => log.trace(res));
     }
 
