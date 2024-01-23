@@ -7,7 +7,7 @@ The result is used for the auto-completion of user inputs on the search form.
 from SPARQLQuery import submit_sparql_query_chain
 
 limit = 10000
-totalResults = xxxx # @todo
+totalResults = 90000
 
 prefixes = '''
 PREFIX schema: <http://schema.org/>
