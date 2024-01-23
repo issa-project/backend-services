@@ -8,8 +8,11 @@ require('dotenv').config();
 let log = logger.application;
 let router = express.Router();
 
-// Load the named entities labels for auto-complete
-let autoCompleteEntities = require('../data/dumpAgrovocEntities.json')
+// Load the labels of descriptors and named entities for auto-complete
+const agrovocDescriptors = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../data/dumpAgrovocDescriptors.json"), "utf8"));
+const wikidataNEs = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../data/dumpWikidataNamedEntities.json"), "utf8"));
+const autoCompleteEntities = [].concat(agrovocDescriptors, wikidataNEs);
+
 
 log.info('Starting up backend services');
 
@@ -239,30 +242,18 @@ router.get('/getArticleDescriptors/', (req, res) => {
 
 
 /**
- * Complete the user's input using Agrovoc labels.
- *
+ * Complete the provided input using labels from an array of entities
  * @param {string} input - first characters entered by the use
- * @return {document} - The output is a JSON array whose documents are shaped as in the example below:
- *     {
- *         "entityUri": "http://aims.fao.org/aos/agrovoc/c_4459",
- *         "entityLabel": "Luffa cylindrica",
- *         "entityPrefLabel": "Luffa aegyptica",
- *         "count": "1"
- *     }
- * entityPrefLabel is optional, it gives the preferred label in case entityLabel is not the preferred label.
- * "Count" is the number of documents in the knowledge base that are assigned the descriptor with this URI/label.
+ * @param {array} entities - array containing all the possible entities to look for
+ * @return {array} - JSON array whose documents are the suggested entities
  */
-router.get('/autoComplete/', (req, res) => {
-    let input = req.query.input.toLowerCase();
-    if (log.isDebugEnabled()) {
-        log.debug('autoComplete - input: ' + input);
-    }
+function getAutoCompleteSuggestions(input, entities) {
 
-    // Count the number of entities selected (to return ony a maximum number)
+    // Count the number of entities selected (to return only a maximum number)
     let _count = 0;
 
     // Search for entities whose label starts like the input
-    let _startsWith = autoCompleteEntities.filter(_entity => {
+    let _startsWith = entities.filter(_entity => {
         if (_count < process.env.SEARCH_MAX_AUTOCOMPLETE) {
             if (_entity.entityLabel.toLowerCase().startsWith(input)) {
                 _count++;
@@ -276,7 +267,8 @@ router.get('/autoComplete/', (req, res) => {
         _startsWith.forEach(res => log.trace(res));
     }
 
-    let _includes = autoCompleteEntities.filter(_entity => {
+    // Additional results: search for entities whose label includes the input but does not start like the input
+    let _includes = entities.filter(_entity => {
         if (_count < process.env.SEARCH_MAX_AUTOCOMPLETE) {
             let _entityLabLow = _entity.entityLabel.toLowerCase()
 
@@ -294,7 +286,65 @@ router.get('/autoComplete/', (req, res) => {
         _includes.forEach(res => log.trace(res));
     }
 
-    res.status(200).json(_startsWith.concat(_includes));
+    return _startsWith.concat(_includes);
+}
+
+
+/**
+ * Complete the user's input using labels from multiple data sources
+ *
+ * @param {string} input - first characters entered by the use
+ * @param {string} entityType - optional. The type of the entity, meaning where to look for an entity containing the input.
+ * One of 'agrovocdescr' for Agrovoc descriptors, or 'wikidata' for Wikidata named entities
+ * This can be a comma-separated list. If not provided, the input is considered of any type.
+ *
+ * @return {document} - The output is a JSON array whose documents are shaped as in the example below:
+ *     {
+ *         "entityUri": "http://aims.fao.org/aos/agrovoc/c_4459",
+ *         "entityLabel": "Luffa cylindrica",
+ *         "entityPrefLabel": "Luffa aegyptica",
+ *         "entityType": "Agrovoc descriptor",
+ *         "count": "1"
+ *     }
+ * "entityPrefLabel" is optional, it gives the preferred label in case entityLabel is not the preferred label.
+ * "count" is the number of documents in the knowledge base that are assigned the entity with this URI/label.
+ * "entityType" is a keyword for naming the source of the entity.
+ */
+router.get('/autoComplete/', (req, res) => {
+    const input = req.query.input.toLowerCase();
+
+    let entityTypes = [];
+    if (req.query.entityType === undefined) {
+        entityTypes = ['all'];
+    } else {
+        entityTypes = req.query.entityType.split(',').map(_entityType => _entityType.toLowerCase());
+    }
+    if (log.isDebugEnabled()) {
+        log.debug(`autoComplete - input: ${input}, entityTypes: ${entityTypes}`);
+    }
+
+    let isError = false;
+    let result = [];
+    entityTypes.forEach(_entityType => {
+        if (!isError) {
+            switch (_entityType) {
+                case 'agrovocdescr':
+                    result = result.concat(getAutoCompleteSuggestions(input, agrovocDescriptors));
+                    break;
+                case 'wikidata':
+                    result = result.concat(getAutoCompleteSuggestions(input, wikidataNEs));
+                    break;
+                case 'all':
+                    result = result.concat(getAutoCompleteSuggestions(input, autoCompleteEntities));
+                    break;
+                default:
+                    res.status(400).json({'status': `invalid value "${_entityType}" for argument entityType`});
+                    isError = true;
+            }
+        }
+    })
+    if (!isError)
+        res.status(200).json(result.sort(sortStrings));
 });
 
 
@@ -560,7 +610,7 @@ router.get('/searchDocumentsByDescriptorRelated/', (req, res) => {
                 } else {
                     // Remove, from the current intersection, the documents that are not mentioned in the results of the current promise
                     log.debug(_promise.value);
-                    joinedResults = joinedResults.filter(_r => _promise.value.some(_n => _n.document === _r.document) );
+                    joinedResults = joinedResults.filter(_r => _promise.value.some(_n => _n.document === _r.document));
 
                     // Join the matched entities of each result in the current intersection with
                     // the matched entities of the corresponding result of the current promise
