@@ -1,3 +1,4 @@
+PREFIX agron:  <http://aims.fao.org/aos/agrontology#>
 PREFIX bibo:   <http://purl.org/ontology/bibo/>
 PREFIX dct:    <http://purl.org/dc/terms/>
 PREFIX dce:    <http://purl.org/dc/elements/1.1/>
@@ -6,14 +7,14 @@ PREFIX prov:   <http://www.w3.org/ns/prov#>
 PREFIX schema: <http://schema.org/>
 PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 
-# This query retrives the documents that are annotated with Agrovoc concept {id} or any related concept or any concept related to sub-concepts of {id}.
-# It keeps track of the actual concepts matched (concatenated in ?matchedEntities), these may contain either {id} itself of related concepts.
+# This query retrieves the documents that are annotated with Agrovoc concept {id} or any of its sub-concepts.
+# It keeps track of the actual concepts matched (concatenated in ?matchedEntities), these may contain either {id} itself of its sub-concepts.
 
 SELECT ?document ?title ?date ?publisher ?lang ?linkPDF (group_concat(distinct ?author, "$") as ?authors) (group_concat(distinct ?matchedEntity, "$$") as ?matchedEntities)
 FROM <http://data-issa.cirad.fr/graph/documents>
-FROM <http://data-issa.cirad.fr/graph/thematic-descriptors>
-FROM <http://data-issa.cirad.fr/graph/annif-descriptors>
-FROM <http://agrovoc.fao.org/graph>
+FROM <http://data-issa.cirad.fr/graph/thematic-descriptors> # annotations about the Agrovoc descriptors
+FROM <http://data-issa.cirad.fr/graph/annif-descriptors>    # annotations about the Agrovoc descriptors
+FROM <http://agrovoc.fao.org/graph>                         # Agrovoc graph itself
 WHERE {
     ?document a prov:Entity.
     OPTIONAL { ?document dct:title ?title.}
@@ -23,18 +24,21 @@ WHERE {
     OPTIONAL { ?document dce:language ?lang.}
     OPTIONAL { ?document schema:downloadUrl ?linkPDF. }
 
-    {   ?document ^oa:hasTarget [ oa:hasBody <{id}> ].
+    {   # Match of {id} isfelf
+        ?document ^oa:hasTarget [ oa:hasBody <{id}> ].
         <{id}>
             skosxl:prefLabel/skosxl:literalForm ?entityLabel.
         FILTER langMatches(lang(?entityLabel), "en")
-        BIND(concat("{id}", '$', ?entityLabel) as ?matchedEntity)
-    } UNION {
+        BIND(concat("{id}", "$", ?entityLabel, "$", "Agrovoc") as ?matchedEntity)
+    }
+    UNION
+    {   # Match of a descendant of {id}
         ?document ^oa:hasTarget [ oa:hasBody ?entityUri ].
         ?entityUri
-            skos:broader*/skos:related <{id}>;
+            (skos:broader|^agron:includes)+ <{id}>;
             skosxl:prefLabel/skosxl:literalForm ?entityLabel.
         FILTER langMatches(lang(?entityLabel), "en")
-        BIND(concat(?entityUri, '$', ?entityLabel) as ?matchedEntity)
+        BIND(concat(?entityUri, "$", ?entityLabel, "$", "Agrovoc") as ?matchedEntity)
     }
 
 } group by ?document ?title ?date ?publisher ?lang ?linkPDF

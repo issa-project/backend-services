@@ -9,6 +9,7 @@ SELECT ?document ?title ?date ?publisher ?lang ?linkPDF (group_concat(distinct ?
 FROM <http://data-issa.cirad.fr/graph/documents>
 FROM <http://data-issa.cirad.fr/graph/thematic-descriptors>
 FROM <http://data-issa.cirad.fr/graph/annif-descriptors>
+FROM <http://data-issa.cirad.fr/graph/entity-fishing-nes>         # annotations about the Wikidata named entities
 WHERE {
     # Find documents who are the target of an annotation whose body is a specific URI
     ?document a prov:Entity.
@@ -19,8 +20,9 @@ WHERE {
     OPTIONAL { ?document dce:language ?lang.}
     OPTIONAL { ?document schema:downloadUrl ?linkPDF. }
 
-    # Add here one line for each descriptor, like this:
+    # Add here one line for each concept to match, like
     #   ?document ^oa:hasTarget [ oa:hasBody <entityUri> ].
+
 {triples}
 
 } group by ?document ?title ?date ?publisher ?lang ?linkPDF

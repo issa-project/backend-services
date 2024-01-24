@@ -13,6 +13,11 @@ const agrovocDescriptors = JSON.parse(fs.readFileSync(path.resolve(__dirname, ".
 const wikidataNEs = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../data/dumpWikidataNamedEntities.json"), "utf8"));
 const autoCompleteEntities = [].concat(agrovocDescriptors, wikidataNEs);
 
+/** String to find in a URI to decide whether this is an Agrovoc URI */
+const MARKER_AGROVOC_URI = "agrovoc";
+
+/** String to find in a URI to decide whether this is an Agrovoc URI */
+const MARKER_WIKIDATA_URI = "wikidata.org";
 
 log.info('Starting up backend services');
 
@@ -30,9 +35,9 @@ function readTemplate(template, id) {
 
 
 /**
- * Sort 2 strings in case-insensitive alphabetic order
- * @param {string} a
- * @param {string} b
+ * Sort 2 entities in case-insensitive alphabetic order of their label
+ * @param {document} a
+ * @param {document} b
  * @returns {number}
  */
 function sortStrings(a, b) {
@@ -45,10 +50,21 @@ function sortStrings(a, b) {
     return 0;
 }
 
+/**
+ * Sort 2 entities in descending order of their count
+ * @param {document} a
+ * @param {document} b
+ * @returns {number}
+ */
+function sortDescCount(a, b) {
+    if (Number(a.count) < Number(b.count)) return 1;
+    if (Number(a.count) > Number(b.count)) return -1;
+    return 0;
+}
 
 /**
- * Split a string formatted like "URI$label$$URI$label$$..." into a document like
- * [ { "entityUri": "URI", "entityLabel": "label" }, { "entityUri": "URI", "entityLabel": "label" } ... ]
+ * Split a string formatted like "URI$label$type$$URI$label$type$$..." into a document like
+ * [ { "entityUri": "URI", "entityLabel": "label", "entityType": "type" }, { "entityUri": "URI", "entityLabel": "label", "entityType": "type" } ... ]
  *
  * @param {string} str - input string to process
  * @returns {array} - array of documents
@@ -56,8 +72,8 @@ function sortStrings(a, b) {
 function splitDollar(str) {
     let result = [];
     str.split('$$').forEach(_e => {
-        let [uri, label] = _e.split('$');
-        result.push({entityUri: uri, entityLabel: label});
+        let [uri, label, type] = _e.split('$');
+        result.push({entityUri: uri, entityLabel: label, entityType: type});
     });
     return result;
 }
@@ -263,7 +279,7 @@ function getAutoCompleteSuggestions(input, entities) {
         } else return false;
     });
     if (log.isTraceEnabled()) {
-        log.trace('getAutoCompleteSuggestions - Result _startsWith: ');
+        log.trace('getAutoCompleteSuggestions - Result startsWith: ');
         _startsWith.forEach(res => log.trace(res));
     }
 
@@ -294,7 +310,7 @@ function getAutoCompleteSuggestions(input, entities) {
  *
  * @param {string} input - first characters entered by the use
  * @param {string} entityType - optional. The type of the entity, meaning where to look for an entity containing the input.
- * One of 'agrovocdescr' for Agrovoc descriptors, or 'wikidata' for Wikidata named entities
+ * One of 'Agrovoc' for Agrovoc descriptors, or 'Wikidata' for Wikidata named entities, or 'All'.
  * This can be a comma-separated list. If not provided, the input is considered of any type.
  *
  * @return {document} - The output is a JSON array whose documents are shaped as in the example below:
@@ -311,6 +327,9 @@ function getAutoCompleteSuggestions(input, entities) {
  */
 router.get('/autoComplete/', (req, res) => {
     const input = req.query.input.toLowerCase();
+    if (log.isDebugEnabled()) {
+        log.debug('autoComplete - input: ' + input);
+    }
 
     let entityTypes = [];
     if (req.query.entityType === undefined) {
@@ -323,14 +342,11 @@ router.get('/autoComplete/', (req, res) => {
     }
 
     let isError = false;
-    let startsWith = [];
-    let includes = [];
-    let resultStartWith = [];
-    let resultIncludes = [];
+    let [startsWith, includes, resultStartsWith, resultIncludes] = [[], [], [], []];
     entityTypes.forEach(_entityType => {
         if (!isError) {
-            switch (_entityType) {
-                case 'agrovocdescr':
+            switch (_entityType.toLowerCase()) {
+                case 'agrovoc':
                     [startsWith, includes] = getAutoCompleteSuggestions(input, agrovocDescriptors);
                     break;
                 case 'wikidata':
@@ -345,12 +361,12 @@ router.get('/autoComplete/', (req, res) => {
             }
         }
         if (!isError) {
-            resultStartWith = resultStartWith.concat(startsWith);
+            resultStartsWith = resultStartsWith.concat(startsWith);
             resultIncludes = resultIncludes.concat(includes);
         }
     })
     if (!isError) {
-        let result = resultStartWith.sort(sortStrings).concat(resultIncludes.sort(sortStrings));
+        let result = resultStartsWith.sort(sortDescCount).concat(resultIncludes.sort(sortDescCount));
         log.info(`autoComplete - input: ${input}, returning ${result.length} results.`);
         res.status(200).json(result);
     }
@@ -358,8 +374,8 @@ router.get('/autoComplete/', (req, res) => {
 
 
 /**
- * Search for documents annotated with a set of descriptors given by their URIs
- * @param {string} uri - URIs of the descriptors to search, passed on the query string either as "uri=a,b,..." or "uri=a&uri=b&..."
+ * Search for documents annotated with a set of entities given by their URIs
+ * @param {string} uri - URIs of the concepts to search, passed on the query string either as "uri=a,b,..." or "uri=a&uri=b&..."
  * @return {document} - output like this:
  * {
  *   "result": [
@@ -377,49 +393,59 @@ router.get('/autoComplete/', (req, res) => {
  *     ...
  * }
  */
-router.get('/searchDocumentsByDescriptor/', (req, res) => {
+router.get('/searchDocumentByConcept/', (req, res) => {
     let uri = req.query.uri;
-    log.info('searchDocumentsByDescriptor - uri: [' + uri + ']');
+    log.info('------------------------- searchDocumentByConcept - uri: [' + uri + ']');
 
     if (uri.length === 0) {
-        log.info('searchDocumentsByDescriptor - no parameter, returning empty SPARQL response');
+        log.info('searchDocumentByConcept - no parameter, returning empty SPARQL response');
         res.status(200).json({result: []});
     } else {
 
+        // ---------------------------------------------------------------
         // Create the SPARQL triple patterns to match each one of the URIs
+        // ---------------------------------------------------------------
+
         let lines = '';
-        let lineTpl = '    ?document ^oa:hasTarget [ oa:hasBody <{uri}> ].';
         let uris = uri.split(',');
         uris.forEach(_uri => {
-            lines += lineTpl.replaceAll("{uri}", _uri) + '\n';
+            if (_uri.includes(MARKER_AGROVOC_URI))
+                lines += '    ?document ^oa:hasTarget [ oa:hasBody <{uri}> ].'.replaceAll("{uri}", _uri) + '\n';
+            else if (_uri.includes(MARKER_WIKIDATA_URI))
+                lines += '    ?document ^schema:about [ oa:hasBody <{uri}> ].'.replaceAll("{uri}", _uri) + '\n';
+            else
+                log.warn("Cannot figure out the data source of searched URI " + uri);
         })
 
+        // ---------------------------------------------------------------
         // Insert the triple patterns into the SPARQL query
-        let queryTpl = fs.readFileSync('queries/searchArticleByDescriptor.sparql', 'utf8');
+        // ---------------------------------------------------------------
+
+        let queryTpl = fs.readFileSync('queries/searchDocumentByConcept.sparql', 'utf8');
         let query = queryTpl.replace("{triples}", lines);
         if (log.isDebugEnabled()) {
-            log.debug('searchDocumentsByDescriptor - Will submit SPARQL query: \n' + query);
+            log.debug('searchDocumentByConcept - Will submit SPARQL query: \n' + query);
         }
 
         (async () => {
             let result = [];
             try {
                 result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
-                    log.info('searchDocumentsByDescriptor returned ' + data.length + ' results');
+                    log.info('searchDocumentByConcept returned ' + data.length + ' results');
                     // Turn string authors into an array
                     data = data.map(_r => {
                         _r.authors = _r.authors.split('$');
                         return _r;
                     });
                     if (log.isTraceEnabled()) {
-                        log.trace('searchDocumentsByDescriptor - SPARQL response: ');
+                        log.trace('searchDocumentByConcept - SPARQL response: ');
                         data.forEach(res => log.trace(res));
                     }
                     return data;
                 }).then(res => res);
 
             } catch (err) {
-                log.error('searchDocumentsByDescriptor error: ' + err);
+                log.error('searchDocumentByConcept error: ' + err);
                 result = err;
             }
             res.status(200).json({result: result});
@@ -429,9 +455,9 @@ router.get('/searchDocumentsByDescriptor/', (req, res) => {
 
 
 /**
- * Search for the documents that are annotated with a set of Agrovoc concepts {id} or any of their sub-concepts.
+ * Search for documents annotated with a set of concepts {id} or any of their sub-concepts.
  *
- * @param {string} uri - URIs of the descriptors to search, passed on the query string either as "uri=a,b,..." or "uri=a&uri=b&..."
+ * @param {string} uri - URIs of the concepts to search, passed on the query string either as "uri=a,b,..." or "uri=a&uri=b&..."
  * @return {document} - output like this:
  *
  * {
@@ -456,22 +482,35 @@ router.get('/searchDocumentsByDescriptor/', (req, res) => {
  *     ...
  * }
  */
-router.get('/searchDocumentsByDescriptorSubConcept/', (req, res) => {
+router.get('/searchDocumentBySubConcept/', (req, res) => {
     let uri = req.query.uri;
-    log.info('searchDocumentsByDescriptorSubConcept - uri: [' + uri + ']');
+    log.info('------------------------- searchDocumentBySubConcept - uri: [' + uri + ']');
 
     if (uri.length === 0) {
-        log.info('searchDocumentsByDescriptorSubConcept - no parameter, returning empty response');
+        log.info('searchDocumentBySubConcept - no parameter, returning empty response');
         res.status(200).json({result: []});
     } else {
 
+        // ---------------------------------------------------
         // Submit one SPARQL query for each URI
+        // ---------------------------------------------------
+
         let uris = uri.split(',');
         let promises = [];
         uris.forEach(_uri => {
-            let query = readTemplate("searchArticleByDescriptorSubConcept.sparql", _uri);
+            let queryTpl;
+            if (_uri.includes(MARKER_AGROVOC_URI))
+                queryTpl = "searchDocumentBySubConceptAgrovoc.sparql";
+            else if (_uri.includes(MARKER_WIKIDATA_URI))
+                queryTpl = "searchDocumentBySubConceptWikidata.sparql";
+            else {
+                log.warn("Cannot figure out the data source of searched URI " + uri + ". Defaulting to Agrovoc.");
+                queryTpl = "searchDocumentBySubConceptAgrovoc.sparql";
+            }
+
+            let query = readTemplate(queryTpl, _uri);
             if (log.isDebugEnabled()) {
-                log.debug('searchDocumentsByDescriptorSubConcept - Will submit SPARQL query: \n' + query);
+                log.debug('searchDocumentBySubConcept - Will submit SPARQL query: \n' + query);
             }
 
             // Submit the SPARQL query and save the promise
@@ -479,11 +518,11 @@ router.get('/searchDocumentsByDescriptorSubConcept/', (req, res) => {
                 let _result = [];
                 try {
                     _result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
-                        log.info('searchDocumentsByDescriptorSubConcept: query for uri ' + _uri + ' returned ' + data.length + ' results');
+                        log.info('searchDocumentBySubConcept: query for uri ' + _uri + ' returned ' + data.length + ' results');
                         return data;
                     }).then(res => res);
                 } catch (err) {
-                    log.error('searchDocumentsByDescriptorSubConcept error: ' + err);
+                    log.error('searchDocumentBySubConcept error: ' + err);
                     _result = err;
                 }
                 return _result;
@@ -524,9 +563,9 @@ router.get('/searchDocumentsByDescriptorSubConcept/', (req, res) => {
                         return _r;
                     });
                 }
-                log.info("searchDocumentsByDescriptorSubConcept: current number of results : " + joinedResults.length);
+                log.info("searchDocumentBySubConcept: current number of results : " + joinedResults.length);
             });
-            log.info("searchDocumentsByDescriptorSubConcept: returning : " + joinedResults.length + " results");
+            log.info("searchDocumentBySubConcept: returning : " + joinedResults.length + " results");
             res.status(200).json({"result": joinedResults});
         });
     }
@@ -534,9 +573,9 @@ router.get('/searchDocumentsByDescriptorSubConcept/', (req, res) => {
 
 
 /**
- * Search for documents that are annotated with a set of Agrovoc concepts {id} or any related concept or any concept related to their sub-concepts.
+ * Search for documents annotated with a set of concepts {id}, or any related concept, or any concept related to their sub-concepts.
  *
- * @param {string} uri - URIs of the descriptor to search, passed on the query string either as "uri=a,b,..." or "uri=a&uri=b&..."
+ * @param {string} uri - URIs of the concepts to search, passed on the query string either as "uri=a,b,..." or "uri=a&uri=b&..."
  * @return {document} - output like this:
  *
  * {
@@ -561,15 +600,15 @@ router.get('/searchDocumentsByDescriptorSubConcept/', (req, res) => {
  *     ...
  * }
  */
-router.get('/searchDocumentsByDescriptorRelated/', (req, res) => {
+router.get('/searchDocumentByRelatedConcept/', (req, res) => {
     let uri = req.query.uri;
     if (log.isInfoEnabled()) {
-        log.info('searchDocumentsByDescriptorRelated - uri: [' + uri + ']');
+        log.info('------------------------- searchDocumentByRelatedConcept - uri: [' + uri + ']');
     }
 
     if (uri.length === 0) {
         if (log.isInfoEnabled()) {
-            log.info('searchDocumentsByDescriptorRelated - no parameter, returning empty response');
+            log.info('searchDocumentByRelatedConcept - no parameter, returning empty response');
         }
         res.status(200).json({result: []});
     } else {
@@ -579,9 +618,9 @@ router.get('/searchDocumentsByDescriptorRelated/', (req, res) => {
         let promises = [];
         uris.forEach(_uri => {
             // Insert the triple patterns into the SPARQL query
-            let query = readTemplate("searchArticleByDescriptorRelated.sparql", _uri);
+            let query = readTemplate("searchDocumentByRelatedConcept.sparql", _uri);
             if (log.isDebugEnabled()) {
-                log.debug('searchDocumentsByDescriptorRelated - Will submit SPARQL query: \n' + query);
+                log.debug('searchDocumentByRelatedConcept - Will submit SPARQL query: \n' + query);
             }
 
             // Submit the SPARQL query and save the promise
@@ -589,11 +628,11 @@ router.get('/searchDocumentsByDescriptorRelated/', (req, res) => {
                 let _result = [];
                 try {
                     _result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
-                        log.info('searchDocumentsByDescriptorRelated: query for uri ' + _uri + ' returned ' + data.length + ' results');
+                        log.info('searchDocumentByRelatedConcept: query for uri ' + _uri + ' returned ' + data.length + ' results');
                         return data;
                     }).then(res => res);
                 } catch (err) {
-                    log.error('searchDocumentsByDescriptorRelated error: ' + err);
+                    log.error('searchDocumentByRelatedConcept error: ' + err);
                     _result = err;
                 }
                 return _result;
@@ -633,9 +672,9 @@ router.get('/searchDocumentsByDescriptorRelated/', (req, res) => {
                         return _r;
                     });
                 }
-                log.info("searchDocumentsByDescriptorRelated: current number of results : " + joinedResults.length);
+                log.info("searchDocumentByRelatedConcept: current number of results : " + joinedResults.length);
             });
-            log.info("searchDocumentsByDescriptorRelated: returning : " + joinedResults.length + " results");
+            log.info("searchDocumentByRelatedConcept: returning : " + joinedResults.length + " results");
             res.status(200).json({"result": joinedResults});
         });
     }

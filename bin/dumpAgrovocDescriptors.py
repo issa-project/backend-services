@@ -41,7 +41,7 @@ WHERE {
       }
     }
 
-    bind("Agrovoc descriptor" as ?entityType)
+    bind("Agrovoc" as ?entityType)
   }
 }  group by ?entityUri ?entityLabel ?entityPrefLabel ?entityType
 offset %(offset)s

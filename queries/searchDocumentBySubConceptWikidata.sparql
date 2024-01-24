@@ -1,0 +1,54 @@
+PREFIX agron:  <http://aims.fao.org/aos/agrontology#>
+PREFIX bibo:   <http://purl.org/ontology/bibo/>
+PREFIX dct:    <http://purl.org/dc/terms/>
+PREFIX dce:    <http://purl.org/dc/elements/1.1/>
+PREFIX oa:     <http://www.w3.org/ns/oa#>
+PREFIX prov:   <http://www.w3.org/ns/prov#>
+PREFIX schema: <http://schema.org/>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+
+# This query retrieves the documents that are annotated with Wikidata named entity {id} or any of its sub-classes or instances.
+# It keeps track of the actual concepts matched (concatenated in ?matchedEntities), these may contain either {id} itself of its sub-concepts.
+
+SELECT ?document ?title ?date ?publisher ?lang ?linkPDF (group_concat(distinct ?author, "$") as ?authors) (group_concat(distinct ?matchedEntity, "$$") as ?matchedEntities)
+FROM <http://data-issa.cirad.fr/graph/documents>
+FROM <http://data-issa.cirad.fr/graph/entity-fishing-nes>         # annotations about the named entities
+FROM <http://data-issa.cirad.fr/graph/wikidata-named-entities>    # dump of the entities from Wikidata (hierarchy and labels)
+WHERE {
+    ?document a prov:Entity.
+    OPTIONAL { ?document dct:title ?title.}
+    OPTIONAL { ?document dce:creator ?author.}
+    OPTIONAL { ?document dct:issued ?date.}
+    OPTIONAL { ?document schema:publication ?publisher.}
+    OPTIONAL { ?document dce:language ?lang.}
+    OPTIONAL { ?document schema:downloadUrl ?linkPDF. }
+
+    ?document ^schema:about [ oa:hasBody ?entityUri ].
+    ?entityUri rdfs:label ?entityLabel.
+
+    {   # Match of {id} isfelf
+        ?document ^schema:about [ oa:hasBody <{id}> ].
+        <{id}> rdfs:label ?entityLabel.
+
+        FILTER langMatches(lang(?entityLabel), "en")
+        BIND(concat("{id}", '$', ?entityLabel, "$", "Wikidata") as ?matchedEntity)
+    }
+    UNION
+    {
+        # Since <http://data-issa.cirad.fr/graph/wikidata-named-entities> contains all the infered rdf:type
+        # and rdfs:subClassOf properties, the union below matches the following cases:
+        #   ?entityUri is an instance of {id},
+        #   ?entityUri is a subclass of {id},
+        #   ?entityUri an instance of a subclass of {id}
+        ?document ^schema:about [ oa:hasBody ?entityUri ].
+        { ?entityUri rdf:type <{id}>. }
+        UNION
+        { ?entityUri rdfs:subClassOf <{id}>. }
+
+        FILTER langMatches(lang(?entityLabel), "en")
+        BIND(concat(?entityUri, "$", ?entityLabel, "$", "Wikidata") as ?matchedEntity)
+    }
+
+
+} group by ?document ?title ?date ?publisher ?lang ?linkPDF
+limit 20000

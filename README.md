@@ -46,10 +46,15 @@ http://localhost:3000/getArticleMetadata?uri=http://data-issa.cirad.fr/document/
 http://localhost:3000/getArticleAuthors/?uri=http://data-issa.cirad.fr/document/592919
 http://localhost:3000/getAbstractNamedEntities/?uri=http://data-issa.cirad.fr/document/592919
 http://localhost:3000/getGeographicNamedEntities/?uri=http://data-issa.cirad.fr/document/592919
-http://localhost:3000/autoComplete/?input=carbon
-http://localhost:3000/searchDocumentsByDescriptor/?uri=http://aims.fao.org/aos/agrovoc/c_3055
-http://localhost:3000/searchDocumentsByDescriptorSubConcept/?uri=http://aims.fao.org/aos/agrovoc/c_3055
-http://localhost:3000/searchDocumentsByDescriptorRelated/?uri=http://aims.fao.org/aos/agrovoc/c_3055
+
+http://localhost:3000/autoComplete/?input=forestry
+http://localhost:3000/autoComplete/?input=forestry&entityType=All
+http://localhost:3000/autoComplete/?input=forestry&entityType=Agrovoc
+http://localhost:3000/autoComplete/?input=forestry&entityType=Agrovoc,Wikidata
+
+http://localhost:3000/searchDocumentByConcept/?uri=http://aims.fao.org/aos/agrovoc/c_423ff1cb
+http://localhost:3000/searchDocumentBySubConcept/?uri=http://aims.fao.org/aos/agrovoc/c_423ff1cb
+http://localhost:3000/searchDocumentByRelatedConcept/?uri=http://aims.fao.org/aos/agrovoc/c_423ff1cb
 ```
 
 
