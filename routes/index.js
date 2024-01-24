@@ -245,7 +245,8 @@ router.get('/getArticleDescriptors/', (req, res) => {
  * Complete the provided input using labels from an array of entities
  * @param {string} input - first characters entered by the use
  * @param {array} entities - array containing all the possible entities to look for
- * @return {array} - JSON array whose documents are the suggested entities
+ * @return {array} - JSON array with 2 arrays: one whose documents are the entities that start like the input,
+ * a second whose documents are the entities that contain the input
  */
 function getAutoCompleteSuggestions(input, entities) {
 
@@ -260,10 +261,9 @@ function getAutoCompleteSuggestions(input, entities) {
                 return true;
             }
         } else return false;
-    }).sort(sortStrings);
-
+    });
     if (log.isTraceEnabled()) {
-        log.trace('autoComplete - Result _startsWith: ');
+        log.trace('getAutoCompleteSuggestions - Result _startsWith: ');
         _startsWith.forEach(res => log.trace(res));
     }
 
@@ -279,14 +279,13 @@ function getAutoCompleteSuggestions(input, entities) {
                 return true;
             }
         } else return false;
-    }).sort(sortStrings);
-
+    });
     if (log.isTraceEnabled()) {
-        log.trace('autoComplete - Result includes: ');
+        log.trace('getAutoCompleteSuggestions - Result includes: ');
         _includes.forEach(res => log.trace(res));
     }
 
-    return _startsWith.concat(_includes);
+    return [_startsWith, _includes];
 }
 
 
@@ -324,27 +323,37 @@ router.get('/autoComplete/', (req, res) => {
     }
 
     let isError = false;
-    let result = [];
+    let startsWith = [];
+    let includes = [];
+    let resultStartWith = [];
+    let resultIncludes = [];
     entityTypes.forEach(_entityType => {
         if (!isError) {
             switch (_entityType) {
                 case 'agrovocdescr':
-                    result = result.concat(getAutoCompleteSuggestions(input, agrovocDescriptors));
+                    [startsWith, includes] = getAutoCompleteSuggestions(input, agrovocDescriptors);
                     break;
                 case 'wikidata':
-                    result = result.concat(getAutoCompleteSuggestions(input, wikidataNEs));
+                    [startsWith, includes] = getAutoCompleteSuggestions(input, wikidataNEs);
                     break;
                 case 'all':
-                    result = result.concat(getAutoCompleteSuggestions(input, autoCompleteEntities));
+                    [startsWith, includes] = getAutoCompleteSuggestions(input, autoCompleteEntities);
                     break;
                 default:
                     res.status(400).json({'status': `invalid value "${_entityType}" for argument entityType`});
                     isError = true;
             }
         }
+        if (!isError) {
+            resultStartWith = resultStartWith.concat(startsWith);
+            resultIncludes = resultIncludes.concat(includes);
+        }
     })
-    if (!isError)
-        res.status(200).json(result.sort(sortStrings));
+    if (!isError) {
+        let result = resultStartWith.sort(sortStrings).concat(resultIncludes.sort(sortStrings));
+        log.info(`autoComplete - input: ${input}, returning ${result.length} results.`);
+        res.status(200).json(result);
+    }
 });
 
 
