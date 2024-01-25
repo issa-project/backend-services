@@ -10,7 +10,7 @@ It provides a set of Web APIs (services) used by the frontend application  avail
 
 The services exposed by the server are defined in [routes/index.js](routes/index.js).
 
-With the exception of service `autoCompleteAgrovoc`, the services submit SPARQL SELECT [queries](queries) to the ISSA SPARQL endpoint (property SEMANTIC_INDEX_SPARQL_ENDPOINT in [.env](.env))
+With the exception of service `autoComplete`, the services submit SPARQL SELECT [queries](queries) to the ISSA SPARQL endpoint (property SEMANTIC_INDEX_SPARQL_ENDPOINT in [.env](.env))
 using the d3-sparql library.
 The response of the services is the output of the d3-sparql library itself, that only returns the "results.bindings" part
 of the SPARQL response in JSON format, following this format:
@@ -27,7 +27,7 @@ of the SPARQL response in JSON format, following this format:
 ]}
 ```
 
-Therefore, the SELECT clause of the SPARQL queries are the de facto documentation of the services 
+Therefore, **the SELECT clause of the SPARQL queries are the de facto documentation of the services** 
 since they give the names of the variables (var1 and var2 in the example above).
 
 ## Standalone deployment
@@ -52,8 +52,8 @@ http://localhost:3000/autoComplete/?input=forestry&entityType=All
 http://localhost:3000/autoComplete/?input=forestry&entityType=Agrovoc
 http://localhost:3000/autoComplete/?input=forestry&entityType=Agrovoc,Wikidata
 
-http://localhost:3000/searchDocumentByConcept/?uri=http://aims.fao.org/aos/agrovoc/c_423ff1cb
-http://localhost:3000/searchDocumentBySubConcept/?uri=http://aims.fao.org/aos/agrovoc/c_423ff1cb
+http://localhost:3000/searchDocumentByConcept/?uri=http://www.wikidata.org/entity/Q234173,http://aims.fao.org/aos/agrovoc/c_423ff1cb
+http://localhost:3000/searchDocumentBySubConcept/?uri=http://www.wikidata.org/entity/Q234173,http://aims.fao.org/aos/agrovoc/c_423ff1cb
 http://localhost:3000/searchDocumentByRelatedConcept/?uri=http://aims.fao.org/aos/agrovoc/c_423ff1cb
 ```
 

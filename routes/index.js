@@ -375,7 +375,7 @@ router.get('/autoComplete/', (req, res) => {
 
 /**
  * Search for documents annotated with a set of entities given by their URIs
- * @param {string} uri - URIs of the concepts to search, passed on the query string either as "uri=a,b,..." or "uri=a&uri=b&..."
+ * @param {string} uri - URIs of the entities to search, passed on the query string either as "uri=a,b,..." or "uri=a&uri=b&..."
  * @return {document} - output like this:
  * {
  *   "result": [
@@ -423,9 +423,8 @@ router.get('/searchDocumentByConcept/', (req, res) => {
 
         let queryTpl = fs.readFileSync('queries/searchDocumentByConcept.sparql', 'utf8');
         let query = queryTpl.replace("{triples}", lines);
-        if (log.isDebugEnabled()) {
+        if (log.isDebugEnabled())
             log.debug('searchDocumentByConcept - Will submit SPARQL query: \n' + query);
-        }
 
         (async () => {
             let result = [];
@@ -455,9 +454,9 @@ router.get('/searchDocumentByConcept/', (req, res) => {
 
 
 /**
- * Search for documents annotated with a set of concepts {id} or any of their sub-concepts.
+ * Search for documents annotated with a set of entities {id} or any of their sub-concepts.
  *
- * @param {string} uri - URIs of the concepts to search, passed on the query string either as "uri=a,b,..." or "uri=a&uri=b&..."
+ * @param {string} uri - URIs of the entities to search, passed on the query string either as "uri=a,b,..." or "uri=a&uri=b&..."
  * @return {document} - output like this:
  *
  * {
@@ -498,39 +497,42 @@ router.get('/searchDocumentBySubConcept/', (req, res) => {
         let uris = uri.split(',');
         let promises = [];
         uris.forEach(_uri => {
-            let queryTpl;
+            let queryTpl = "";
             if (_uri.includes(MARKER_AGROVOC_URI))
                 queryTpl = "searchDocumentBySubConceptAgrovoc.sparql";
             else if (_uri.includes(MARKER_WIKIDATA_URI))
                 queryTpl = "searchDocumentBySubConceptWikidata.sparql";
-            else {
-                log.warn("Cannot figure out the data source of searched URI " + uri + ". Defaulting to Agrovoc.");
-                queryTpl = "searchDocumentBySubConceptAgrovoc.sparql";
-            }
+            else
+                log.warn("Cannot figure out the data source of searched URI " + uri);
 
-            let query = readTemplate(queryTpl, _uri);
-            if (log.isDebugEnabled()) {
-                log.debug('searchDocumentBySubConcept - Will submit SPARQL query: \n' + query);
-            }
+            if (queryTpl !== "") {
+                let query = readTemplate(queryTpl, _uri);
+                if (log.isDebugEnabled())
+                    log.debug('searchDocumentBySubConcept - Will submit SPARQL query: \n' + query);
 
-            // Submit the SPARQL query and save the promise
-            let _promise = (async () => {
-                let _result = [];
-                try {
-                    _result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
-                        log.info('searchDocumentBySubConcept: query for uri ' + _uri + ' returned ' + data.length + ' results');
-                        return data;
-                    }).then(res => res);
-                } catch (err) {
-                    log.error('searchDocumentBySubConcept error: ' + err);
-                    _result = err;
-                }
-                return _result;
-            })();
-            promises.push(_promise);
+                // Submit the SPARQL query and save the promise
+                let _promise = (async () => {
+                    let _result = [];
+                    try {
+                        _result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
+                            log.info('searchDocumentBySubConcept: query for uri ' + _uri + ' returned ' + data.length + ' results');
+                            return data;
+                        }).then(res => res);
+                    } catch (err) {
+                        log.error('searchDocumentBySubConcept error: ' + err);
+                        _result = err;
+                    }
+                    return _result;
+                })();
+                promises.push(_promise);
+            }
         })
 
-        // Wait for all the responses (promises) and compute the intersection of all of them based on the document URIs
+        // ---------------------------------------------------
+        // Wait for all the responses (promises) and compute the
+        // intersection of all of them based on the document URIs
+        // ---------------------------------------------------
+
         let joinedResults = [];
         Promise.allSettled(promises).then((_promises) => {
 
@@ -573,9 +575,9 @@ router.get('/searchDocumentBySubConcept/', (req, res) => {
 
 
 /**
- * Search for documents annotated with a set of concepts {id}, or any related concept, or any concept related to their sub-concepts.
+ * Search for documents annotated with a set of entities {id}, or any related entity, or any entity related to their sub-entities.
  *
- * @param {string} uri - URIs of the concepts to search, passed on the query string either as "uri=a,b,..." or "uri=a&uri=b&..."
+ * @param {string} uri - URIs of the entities to search, passed on the query string either as "uri=a,b,..." or "uri=a&uri=b&..."
  * @return {document} - output like this:
  *
  * {
@@ -617,27 +619,36 @@ router.get('/searchDocumentByRelatedConcept/', (req, res) => {
         let uris = uri.split(',');
         let promises = [];
         uris.forEach(_uri => {
-            // Insert the triple patterns into the SPARQL query
-            let query = readTemplate("searchDocumentByRelatedConcept.sparql", _uri);
-            if (log.isDebugEnabled()) {
-                log.debug('searchDocumentByRelatedConcept - Will submit SPARQL query: \n' + query);
-            }
+            let queryTpl = "";
+            if (_uri.includes(MARKER_AGROVOC_URI))
+                queryTpl = "searchDocumentByRelatedAgrovoc.sparql";
+            else if (_uri.includes(MARKER_WIKIDATA_URI))
+                queryTpl = "searchDocumentByRelatedWikidata.sparql";
+            else
+                log.warn("Cannot figure out the data source of searched URI " + uri);
 
-            // Submit the SPARQL query and save the promise
-            let _promise = (async () => {
-                let _result = [];
-                try {
-                    _result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
-                        log.info('searchDocumentByRelatedConcept: query for uri ' + _uri + ' returned ' + data.length + ' results');
-                        return data;
-                    }).then(res => res);
-                } catch (err) {
-                    log.error('searchDocumentByRelatedConcept error: ' + err);
-                    _result = err;
-                }
-                return _result;
-            })();
-            promises.push(_promise);
+            if (queryTpl !== "") {
+                // Insert the triple patterns into the SPARQL query
+                let query = readTemplate(queryTpl, _uri);
+                if (log.isDebugEnabled())
+                    log.debug('searchDocumentByRelatedConcept - Will submit SPARQL query: \n' + query);
+
+                // Submit the SPARQL query and save the promise
+                let _promise = (async () => {
+                    let _result = [];
+                    try {
+                        _result = await d3.sparql(process.env.SEMANTIC_INDEX_SPARQL_ENDPOINT, query).then((data) => {
+                            log.info('searchDocumentByRelatedConcept: query for uri ' + _uri + ' returned ' + data.length + ' results');
+                            return data;
+                        }).then(res => res);
+                    } catch (err) {
+                        log.error('searchDocumentByRelatedConcept error: ' + err);
+                        _result = err;
+                    }
+                    return _result;
+                })();
+                promises.push(_promise);
+            }
         })
 
         // Wait for all the responses (promises) and compute the intersection of all of them based on the document URIs
