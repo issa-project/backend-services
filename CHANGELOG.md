@@ -1,6 +1,8 @@
 ## [CURRENT]
 
-- Renamed service autoCompleteAgrovoc to autoComplete
+- Include Wikidata named entities in search services
+- Renamed several services
+- Enrich dump of Agrovoc entities to improve auto-complete service
 
 ## [1.1] 2023-10-04
 
