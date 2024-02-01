@@ -12,17 +12,15 @@ C 30
 from SPARQLQuery import submit_sparql_query_chain
 
 limit = 10000
-totalResults = 89000
+totalResults = 90000
 
-prefixes = '''
+query_tpl = '''
 PREFIX oa:      <http://www.w3.org/ns/oa#>
 PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX schema:  <http://schema.org/>
 PREFIX skos:    <http://www.w3.org/2004/02/skos/core#>
-'''
 
-query_tpl = prefixes + '''
 SELECT distinct ?entityUri ?entityLabel ?entityPrefLabel ?entityType ?count
 FROM NAMED <http://data-issa.cirad.fr/graph/entity-fishing-nes>         # annotations about the named entities
 FROM NAMED <http://data-issa.cirad.fr/graph/wikidata-named-entities>    # dump of the entities from Wikidata (hierarchy and labels)
@@ -43,11 +41,7 @@ WHERE {
       {
 		?a oa:hasBody ?body.
         { graph <http://data-issa.cirad.fr/graph/wikidata-named-entities> {
-			{ ?body rdf:type ?entityUri. }
-	        UNION
-	        { ?body rdfs:subClassOf ?entityUri. }
-        	UNION
-	        { ?body rdf:type/rdfs:subClassOf ?entityUri. }
+	        ?body rdfs:subClassOf ?entityUri.
 	    }}
       }
     } GROUP BY ?entityUri  OFFSET %(offset)s  LIMIT %(limit)s

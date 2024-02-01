@@ -14,15 +14,13 @@ from SPARQLQuery import submit_sparql_query_chain
 limit = 10000
 totalResults = 25000
 
-prefixes = '''
+query_tpl = '''
 PREFIX oa:      <http://www.w3.org/ns/oa#>
 PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos:    <http://www.w3.org/2004/02/skos/core#>
 PREFIX skosxl:  <http://www.w3.org/2008/05/skos-xl#>
-'''
 
-query_tpl = prefixes + '''
 SELECT distinct ?entityUri ?entityLabel ?entityPrefLabel ?entityType ?count
 FROM NAMED <http://data-issa.cirad.fr/graph/thematic-descriptors>
 FROM NAMED <http://data-issa.cirad.fr/graph/annif-descriptors>
@@ -43,7 +41,7 @@ WHERE {
       { ?a oa:hasBody ?entityUri. }
       UNION
       { ?a oa:hasBody ?body. { graph <http://agrovoc.fao.org/graph> { ?body skos:broader+ ?entityUri. }}}
-    } group by ?entityUri
+    } GROUP BY ?entityUri
   }
 
   { # This sub-query retrieves all the Agrovoc concepts (the descriptor and their hierarchy) and their labels.

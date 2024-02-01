@@ -1,12 +1,8 @@
-PREFIX pro: <http://purl.org/hpi/patchr#>
-PREFIX pr: <http://purl.org/ontology/prv/core#>
-PREFIX bibo:   <http://purl.org/ontology/bibo/>
 PREFIX dct:    <http://purl.org/dc/terms/>
 PREFIX dce:    <http://purl.org/dc/elements/1.1/>
 PREFIX oa:     <http://www.w3.org/ns/oa#>
 PREFIX prov:   <http://www.w3.org/ns/prov#>
 PREFIX schema: <http://schema.org/>
-PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 
 SELECT ?document ?title ?date ?publisher ?lang ?linkPDF "" as ?authors "" as ?matchedEntities
 FROM <http://data-issa.cirad.fr/graph/documents>
