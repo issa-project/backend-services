@@ -1,6 +1,8 @@
 """
-This script retrieves the labels and URIs of all the Wikidata entities referred to in the corpus,
-may they be NEs assigned to articles or parents of these NEs.
+This script retrieves the labels and URIs of all the Wikidata entities referred to in the abstracts of the articles in the corpus,
+may they be NEs assigned to articles or parents of these NEs. This way we can search an entity that is not explicitly a named entity,
+but whose sub-classes or instances are named entities.
+
 Field 'count' gives the number of articles that have as NE the Wikidata entity or its sub-entities.
 Example: if A and B are sub-classes of C, A is a NE of 10 articles and B is a NE or 20 articles,
 then the query will return:
@@ -9,14 +11,37 @@ B 20
 C 30
 """
 
-from SPARQLQuery import submit_sparql_query_chain
-
+from SPARQLQuery import submit_sparql_query_chain, submit_sparql_query, endpoint
 limit = 10000
-totalResults = 90000
+
+# This query counts the total number of URIs for which we want to get the labels.
+# This includes the NEs themselves but also all their parents.
+count_query_tpl = '''
+PREFIX oa:      <http://www.w3.org/ns/oa#>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema:  <http://schema.org/>
+
+SELECT count(distinct ?entityUri) as ?count
+FROM <http://data-issa.cirad.fr/graph/entity-fishing-nes>
+FROM NAMED <http://data-issa.cirad.fr/graph/wikidata-named-entities>
+WHERE {
+  ?a a oa:Annotation; schema:about ?document.
+  ?a oa:hasTarget [ oa:hasSource ?abstract ].
+  FILTER (strEnds(str(?abstract), "#abstract"))
+
+  { ?a oa:hasBody ?entityUri. }
+  UNION
+  {
+    ?a oa:hasBody ?body.
+    { graph <http://data-issa.cirad.fr/graph/wikidata-named-entities> {
+        ?body rdfs:subClassOf ?entityUri.
+      }}
+  }
+}
+'''
 
 query_tpl = '''
 PREFIX oa:      <http://www.w3.org/ns/oa#>
-PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX schema:  <http://schema.org/>
 PREFIX skos:    <http://www.w3.org/2004/02/skos/core#>
@@ -35,6 +60,8 @@ WHERE {
     FROM NAMED <http://data-issa.cirad.fr/graph/wikidata-named-entities>
     WHERE {
       ?a a oa:Annotation; schema:about ?document.
+      ?a oa:hasTarget [ oa:hasSource ?abstract ].
+      FILTER (strEnds(str(?abstract), "#abstract"))
 
 	  { ?a oa:hasBody ?entityUri. }
       UNION
@@ -68,6 +95,11 @@ WHERE {
 '''
 
 if __name__ == '__main__':
-    results_json = submit_sparql_query_chain(query_tpl, totalResults, limit)
+    print("Counting the number of URIs to process...")
+    results_json = submit_sparql_query(endpoint, count_query_tpl)
+    totalUris = results_json['results']['bindings'][0]['count']['value']
+    print(f"Number of URIs to process: {totalUris}")
+
+    results_json = submit_sparql_query_chain(query_tpl, int(totalUris), limit)
     with open(f"../data/dumpWikidataNamedEntities.json", 'w', encoding="utf-8") as f:
         f.write(results_json)
